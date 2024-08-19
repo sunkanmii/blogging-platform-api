@@ -24,6 +24,10 @@ const postSchema = new Schema({
         type: SchemaTypes.String,
         required: true
     },
+    description: {
+        type: SchemaTypes.String,
+        required: true
+    },
     content: [contentBlockSchema], // array of content blocks
     author: {
         type: SchemaTypes.ObjectId,
