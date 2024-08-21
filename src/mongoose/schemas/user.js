@@ -18,6 +18,10 @@ const userSchema = new Schema({
         type: SchemaTypes.String,
         default: null
     },
+    isAdmin: {
+        type: SchemaTypes.Boolean,
+        default: false
+    },
     password: {
         type: SchemaTypes.String
     },
@@ -29,6 +33,7 @@ const userSchema = new Schema({
         type: SchemaTypes.String,
         default: null
     },
+    refreshTokens: [SchemaTypes.String]
 });
 
 export default mongoose.model('User', userSchema);
