@@ -22,6 +22,7 @@ export const signup = async (req, res) => {
         await newUser.save();
 
         const theUser = { 
+            id: newUser._id,
             fullName: newUser.fullName, 
             username: newUser.username, 
             email: newUser.email, 
@@ -59,6 +60,7 @@ export const login = async (req, res) => {
         }
 
         const theUser = { 
+            id: user._id,
             fullName: user.fullName, 
             username: user.username, 
             email: user.email, 
@@ -119,6 +121,7 @@ export const refreshToken = async (req,res) => {
             }
 
             const theUser = { 
+                id: foundUser._id,
                 fullName: foundUser.fullName, 
                 username: foundUser.username, 
                 email: foundUser.email, 

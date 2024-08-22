@@ -2,9 +2,14 @@ import mongoose, { Schema, SchemaTypes } from "mongoose";
 
 const commentSchema = new Schema({
     post: {
-        type: SchemaTypes.String,
+        type: SchemaTypes.ObjectId,
         ref: 'Post',
         required: true
+    },
+    replyTo: {
+        type: SchemaTypes.ObjectId,
+        ref: 'Comment',
+        default: null // If this is null, it's a top-level comment
     },
     owner: {
         type: SchemaTypes.ObjectId,
@@ -15,23 +20,25 @@ const commentSchema = new Schema({
         type: SchemaTypes.String,
         required: true
     },
-    replies: [
-        {
-            type: SchemaTypes.ObjectId,
-            ref: 'Comment'
-        }
-    ],
-    likes: [{
-        type: SchemaTypes.ObjectId,
-        ref: 'User'
-    }],
-    dislikes: [{
-        type: SchemaTypes.ObjectId,
-        ref: 'User'
-    }]
+    likes: {
+        type: SchemaTypes.Number,
+        default: 0
+    },
+    dislikes: {
+        type: SchemaTypes.Number,
+        default: 0
+    },
+    replies: {
+        type: SchemaTypes.Number,
+        default: 0
+    }
 },
 {
     timestamps: true
-})
+});
+
+commentSchema.index({ post: 1 });
+commentSchema.index({ replyTo: 1 });
+commentSchema.index({ owner: 1 });
 
 export default mongoose.model('Comment', commentSchema);

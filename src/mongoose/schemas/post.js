@@ -39,17 +39,23 @@ const postSchema = new Schema({
             type: SchemaTypes.String
         }
     ],
-    likes: [{
-        type: SchemaTypes.ObjectId,
-        ref: 'User'
-    }],
-    dislikes: [{
-        type: SchemaTypes.ObjectId,
-        ref: 'User'
-    }]
+    likes: {
+        type: SchemaTypes.Number,
+        default: 0
+    },
+    dislikes: {
+        type: SchemaTypes.Number,
+        default: 0
+    },
+    comments: {
+        type: SchemaTypes.Number,
+        default: 0
+    }
 },
 {
     timestamps: true
 })
+
+postSchema.index({ tags: 1 });
 
 export default mongoose.model('Post', postSchema);

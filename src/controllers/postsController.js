@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Post from "../mongoose/schemas/post.js";
 import User from "../mongoose/schemas/user.js";
+import { matchedData, validationResult } from "express-validator";
 
 export const getPosts = async (req, res) => {
     const { limit = 3, cursor } = req.query;
@@ -40,11 +41,46 @@ export const getPost = async (req, res) => {
         return res.status(400).json({message: "Post id is not valid!"});
     }
     try {
-        const post = await Post.findById(req.params.id, { __v: false }).populate('author', 'fullName profileImage').lean();       
-        if(!post) return res.status(404).json({message: "Post not found!"});
-        return res.json(post);
+        const foundPost = await Post.findById(req.params.id, { __v: false })
+            .populate('author', 'fullName profileImage')
+            .lean();       
+
+        if(!foundPost) return res.status(404).json({message: "Post not found!"});
+
+        return res.status(200).json(foundPost);
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: error.message });
+    }
+}
+
+export const createPost = async (req, res) => {
+    if(!req.user.isAdmin) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to create a post.' });
+
+    const result = validationResult(req);
+    if(!result.isEmpty()) {
+        const errors = result.array();
+        const errorMessages = {};
+        errorMessages.title = errors.find((error) => error.path === "title")?.msg;
+        errorMessages.description = errors.find((error) => error.path === "description")?.msg;
+        errorMessages.content = errors.find((error) => error.path === "content")?.msg;
+        errorMessages.tags = errors.find((error) => error.path === "tags")?.msg;
+        return res.status(400).json({ errorMessages });
+    }
+
+    const {title, description, content, tags} = matchedData(req);
+    try {        
+        const post = new Post({
+            author: req.user.id,
+            title,
+            description,
+            content,
+            tags
+        });
+        await post.save();
+        return res.status(201).json({ message: 'Post created successfully.' });
+    } catch (error) {
+        console.log(error);
+        return res.json({ message: error.message });  
     }
 }
