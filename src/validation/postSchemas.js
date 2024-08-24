@@ -1,4 +1,4 @@
-import { body } from 'express-validator';
+import { body, param } from 'express-validator';
 
 const validateContentBlock = (block) => {
     // Perform validation for a single content block
@@ -57,4 +57,16 @@ export const postCreationSchema = [
             return tags.every(tag => typeof tag === 'string');
         })
         .withMessage('Each tag must be a string')
+];
+
+export const commentCreationSchema = [
+    param('id')
+        .isMongoId()
+        .withMessage('Invalid post id'),
+    body('body')
+        .trim()
+        .notEmpty()
+        .withMessage('Comment must not be empty')
+        .isString()
+        .withMessage('Comment must be a string')   
 ];
