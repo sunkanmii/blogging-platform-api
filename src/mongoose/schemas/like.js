@@ -14,7 +14,8 @@ const likeSchema = new Schema({
     comment: {
         type: SchemaTypes.ObjectId,
         ref: 'Comment',
-        required: false // if this is null, then it is a post like, else it is a comment like
+        required: false, // if this is null, then it is a post like, else it is a comment like
+        default: null
     },
     isLiked: {
         type: SchemaTypes.Boolean,

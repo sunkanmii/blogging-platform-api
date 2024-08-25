@@ -59,8 +59,56 @@ export const postCreationSchema = [
         .withMessage('Each tag must be a string')
 ];
 
+export const postUpdateScema = [
+    body('title')
+        .optional()
+        .trim()
+        .notEmpty()
+        .withMessage('Post title is required')
+        .isString()
+        .withMessage('Post title must be a string'),
+    body('description')
+        .optional()
+        .trim()
+        .notEmpty()
+        .withMessage('Post description is required')
+        .isString()
+        .withMessage('Post description must be a string'),
+    body('content')
+        .optional()
+        .isArray()
+        .withMessage('Content must be an array')
+        .custom((content) => {
+            if(content.length === 0) return false;
+            return true;
+        })
+        .withMessage('Content must not be empty')
+        .custom((content) => {
+            for (const block of content) {
+                if(!validateContentBlock(block)){
+                    return false;
+                }
+            }
+            return true;
+        })
+        .withMessage('Invalid content block format'),
+    body('tags')
+        .optional()
+        .isArray()
+        .withMessage('Tags must be an array')
+        .custom((tags) => {
+            if(tags.length === 0) return false;
+            return true;
+        })
+        .withMessage('Tags must not be an empty array')
+        .custom((tags) => {
+            return tags.every(tag => typeof tag === 'string');
+        })
+        .withMessage('Each tag must be a string')
+];
+
 export const commentCreationSchema = [
-    param('id')
+    param('postId')
         .isMongoId()
         .withMessage('Invalid post id'),
     body('body')
