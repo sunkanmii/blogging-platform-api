@@ -9,12 +9,12 @@ const likeSchema = new Schema({
     post: {
         type: SchemaTypes.ObjectId,
         ref: 'Post',
-        required: false // If it's a like on a comment, this can be null
+        required: true
     },
     comment: {
         type: SchemaTypes.ObjectId,
         ref: 'Comment',
-        required: false // If it's a like on a post, this can be null
+        required: false // if this is null, then it is a post like, else it is a comment like
     },
     isLiked: {
         type: SchemaTypes.Boolean,

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Post from "../mongoose/schemas/post.js";
 import User from "../mongoose/schemas/user.js";
 import Comment from "../mongoose/schemas/comment.js"
+import Like from "../mongoose/schemas/like.js";
 import { matchedData, validationResult } from "express-validator";
 
 export const getPosts = async (req, res) => {
@@ -166,5 +167,71 @@ export const createComment = async (req, res) => {
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error });        
+    }
+}
+
+export const deletePost = async (req, res) => {
+    if(!req.user.isAdmin) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to create a post.' });
+
+    if(!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ msg: "Invalid post id" });
+
+    let session = null;
+
+    try {
+        const post = await Post.findById(req.params.id);
+        if(!post) return res.status(404).json({ msg: "Post not found" });
+
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        await post.deleteOne();
+        await Comment.deleteMany({ post: req.params.id });
+        await Like.deleteMany({ post: req.params.id }); 
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return res.sendStatus(204);
+    } catch (error) {
+        if(session !== null){
+            await session.abortTransaction();
+            session.endSession();
+        }
+
+        console.log(error);
+        return res.status(500).json(error);
+    }
+}
+
+export const deleteComment = async (req, res) => {
+    if(!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ msg: "Invalid post id" });
+    if(!mongoose.isValidObjectId(req.params.commentId)) return res.status(400).json({ msg: "Invalid comment id" });
+    
+    let session = null;
+
+    try {
+        const comment = await Comment.findById(req.params.commentId);
+        if(!comment) return res.status(404).json({ msg: "Comment not found" });
+        if(!req.user.isAdmin && (comment.owner.toString() !== req.user.id)) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to create a post.' });
+
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        await comment.deleteOne();
+        await Comment.deleteMany({ replyTo: req.params.commentId });
+        await Like.deleteMany({ comment: req.params.commentId }); 
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return res.sendStatus(204);
+    } catch (error) {
+        if(session !== null){
+            await session.abortTransaction();
+            session.endSession();
+        }
+
+        console.log(error);
+        return res.status(500).json(error);
     }
 }
