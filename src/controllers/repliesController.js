@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
+import { matchedData, validationResult } from "express-validator";
+
 import Comment from "../mongoose/schemas/comment.js";
+import Post from "../mongoose/schemas/post.js";
+import Like from "../mongoose/schemas/like.js";
 
 export const getCommentReplies = async (req, res) => {
     if(!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ message: "Post id is not valid!" });
@@ -8,10 +12,101 @@ export const getCommentReplies = async (req, res) => {
     try {
         const replies = await Comment.find({ post: req.params.postId, replyTo: req.params.commentId }, { __v: false, replyTo: false })
             .populate("owner", "username profileImage")
+            .sort({ _id: -1 })
             .lean();
         
         return res.status(200).json(replies);
     } catch (error) {
+        console.log(error);
+        return res.status(500).json(error);
+    }
+}
+
+export const createCommentReply = async (req, res) => {
+    const result = validationResult(req);
+    if(!result.isEmpty()) return res.status(400).json({ errors: result.array() });
+    const { commentId, postId, body } = matchedData(req);   
+    
+    let session = null;
+    try {
+        const post = await Post.findById(postId);
+        if(!post) return res.status(400).json({ msg: "Post not found" });
+
+        const comment = await Comment.findOne({ _id: commentId, post: postId });
+        if(!comment) return res.status(404).json({ msg: "Comment not found" });
+
+        const reply = new Comment({
+            post: postId,
+            replyTo: commentId,
+            owner: req.user.id,
+            body,
+        });
+        post.comments++;
+        comment.replies++;
+        
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        await reply.save({ session });
+        await post.save({ session });
+        await comment.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return res.status(201).json({ msg: 'comment reply was created successfuly' });
+    } catch (error) {
+        if(session !== null){
+            await session.abortTransaction();
+            session.endSession();
+        }
+        console.log(error);
+        return res.status(500).json(error);        
+    }
+}
+
+export const deleteCommentReply = async (req, res) => {
+    const { postId, commentId, replyId } = req.params;
+    if(!mongoose.isValidObjectId(postId)) return res.status(400).json({ msg: "Invalid post id" });
+    if(!mongoose.isValidObjectId(commentId)) return res.status(400).json({ msg: "Invalid comment id" });
+    if(!mongoose.isValidObjectId(replyId)) return res.status(400).json({ msg: "Invalid comment reply id" });
+    
+    let session = null;
+
+    try {
+        const post = await Post.findById(postId);
+        if(!post) return res.status(400).json({ msg: "Post not found" });
+
+        const comment = await Comment.findById(commentId);
+        if(!comment) return res.status(404).json({ msg: "Comment not found" });
+
+        const reply = await Comment.findById(replyId);
+        if(!reply) return res.status(404).json({ msg: "reply not found" });
+
+        if(!req.user.isAdmin && (reply.owner.toString() !== req.user.id)) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to create a post.' });
+
+        post.comments--;
+        comment.replies--;
+        
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        await post.save({ session });
+        await comment.save({ session });
+        await reply.deleteOne().session(session);
+        await Comment.deleteMany({ replyTo: replyId }).session(session); // replies of the current reply to be deleted
+        await Like.deleteMany({ comment: replyId }).session(session); // delete the likes doc for the reply doc
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return res.sendStatus(204);
+    } catch (error) {
+        if(session !== null){
+            await session.abortTransaction();
+            session.endSession();
+        }
+
         console.log(error);
         return res.status(500).json(error);
     }

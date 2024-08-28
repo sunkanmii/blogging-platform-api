@@ -3,7 +3,11 @@ import mongoose from "mongoose";
 import routes from "./src/routes/routes.js";
 import morgan from "morgan";
 
-mongoose.connect('mongodb://localhost:27017/blog')
+// mongoose.connect('mongodb://localhost:27017/blog')
+//     .then(() => console.log("connected to the database"))
+//     .catch(error => console.log(error));
+
+mongoose.connect(process.env.MONGODB_CONNECTION_STRING)
     .then(() => console.log("connected to the database"))
     .catch(error => console.log(error));
 

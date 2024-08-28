@@ -138,9 +138,9 @@ export const deletePost = async (req, res) => {
         session = await mongoose.startSession();
         session.startTransaction();
 
-        await post.deleteOne();
-        await Comment.deleteMany({ post: req.params.postId });
-        await Like.deleteMany({ post: req.params.postId }); 
+        await post.deleteOne().session(session);
+        await Comment.deleteMany({ post: req.params.postId }).session(session);
+        await Like.deleteMany({ post: req.params.postId }).session(session); 
 
         await session.commitTransaction();
         session.endSession();
@@ -181,9 +181,6 @@ export const likeOrDislikePost = async (req, res) => {
         // if the user is doing the same action (liking a post he already liked or the opposite)
         if(likeDoc && likeDoc.isLiked === isLiked) return res.status(409).json({ msg: `You already ${action}d this post` });
 
-        session = await mongoose.startSession();
-        session.startTransaction();
-
         if(!likeDoc){
             likeDoc = new Like({
                 user: req.user.id,
@@ -197,8 +194,11 @@ export const likeOrDislikePost = async (req, res) => {
 
         isLiked ? post.likes++ : post.dislikes++;
         
-        await likeDoc.save();
-        await post.save();
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        await likeDoc.save({ session });
+        await post.save({ session });
 
         await session.commitTransaction();
         session.endSession();

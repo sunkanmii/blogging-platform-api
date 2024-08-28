@@ -90,16 +90,52 @@ export const getComment = async (req, res) => {
 export const createComment = async (req, res) => {
     const result = validationResult(req);
     if(!result.isEmpty()) return res.status(400).json({ errors: result.array() });
-    const { id, body } = matchedData(req);    
+    const { postId, body } = matchedData(req); 
+    
+    let session = null;    
     try {
+        const post = await Post.findById(postId);
+        if(!post) return res.status(400).json({ msg: "Post not found" });
+        
         const comment = new Comment({
-            post: id,
-            owner: req.user.postId,
+            post: postId,
+            owner: req.user.id,
             body,
         });
-        await comment.save();
+        post.comments++;
+
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        await post.save({ session });
+        await comment.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
 
         return res.status(201).json({ msg: 'comment was created successfuly' });
+    } catch (error) {
+        if(session !== null){
+            await session.abortTransaction();
+            session.endSession();
+        }
+        console.log(error);
+        return res.status(500).json(error);        
+    }
+}
+
+export const updateComment = async (req, res) => {
+    const result = validationResult(req);
+    if(!result.isEmpty()) return res.status(400).json({ errors: result.array() });
+    const { postId, commentId, body } = matchedData(req);    
+    try {
+        const comment = await Comment.findOne({ _id: commentId, post: postId, replyTo: null });
+        if(!comment) return res.status(404).json({ msg: "Comment not found" });
+        if(comment.owner.toString() !== req.user.id) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to update this comment.' });
+        comment.body = body;
+        await comment.save();
+
+        return res.sendStatus(204);
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error });        
@@ -107,22 +143,31 @@ export const createComment = async (req, res) => {
 }
 
 export const deleteComment = async (req, res) => {
-    if(!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ msg: "Invalid post id" });
-    if(!mongoose.isValidObjectId(req.params.commentId)) return res.status(400).json({ msg: "Invalid comment id" });
+    const { postId, commentId } = req.params;
+    if(!mongoose.isValidObjectId(postId)) return res.status(400).json({ msg: "Invalid post id" });
+    if(!mongoose.isValidObjectId(commentId)) return res.status(400).json({ msg: "Invalid comment id" });
     
     let session = null;
 
     try {
-        const comment = await Comment.findById(req.params.commentId);
+        const post = await Post.findById(postId);
+        if(!post) return res.status(400).json({ msg: "Post not found" });
+
+        const comment = await Comment.findById(commentId);
         if(!comment) return res.status(404).json({ msg: "Comment not found" });
+
         if(!req.user.isAdmin && (comment.owner.toString() !== req.user.id)) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to create a post.' });
+
+        post.comments--;
 
         session = await mongoose.startSession();
         session.startTransaction();
 
-        await comment.deleteOne();
-        await Comment.deleteMany({ replyTo: req.params.commentId });
-        await Like.deleteMany({ comment: req.params.commentId }); 
+        await post.save({ session });
+
+        await comment.deleteOne().session(session);
+        await Comment.deleteMany({ replyTo: commentId }).session(session);
+        await Like.deleteMany({ comment: commentId }).session(session); 
 
         await session.commitTransaction();
         session.endSession();
