@@ -65,6 +65,87 @@ export const createCommentReply = async (req, res) => {
     }
 }
 
+export const updateCommentReply = async (req, res) => {
+    const result = validationResult(req);
+    if(!result.isEmpty()) return res.status(400).json({ errors: result.array() });
+    const { postId, commentId, replyId, body } = matchedData(req);    
+    try {
+        const reply = await Comment.findOne({ _id: replyId, post: postId, replyTo: commentId });
+        if(!reply) return res.status(404).json({ msg: "Comment reply not found" });
+        if(reply.owner.toString() !== req.user.id) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to update this comment.' });
+        reply.body = body;
+        await reply.save();
+
+        return res.sendStatus(204);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error });        
+    }
+}
+
+export const likeOrDislikeReply = async (req, res) => {
+    const postId = req.params.postId;
+    const commentId = req.params.commentId;
+    const replyId = req.params.replyId;
+
+    if(!mongoose.isValidObjectId(postId)) return res.status(400).json({ msg: "Invalid post id" });
+    if(!mongoose.isValidObjectId(commentId)) return res.status(400).json({ msg: "Invalid comment id" });
+    if(!mongoose.isValidObjectId(replyId)) return res.status(400).json({ msg: "Invalid comment reply id" });
+
+    const { action } = req.body;
+
+    if(!["like", "dislike"].includes(action)) return res.status(400).json({ msg: "Invalid action. Must be 'like' or 'dislike'." });
+
+    let session = null;
+
+    try {
+        const reply = await Comment.findOne({ _id: replyId, post: postId, replyTo: commentId });
+        if(!reply) return res.status(404).json({ msg: "Comment not found" });
+
+        const isLiked = action === "like";
+
+        /*
+            likeDoc: check if there is already a Like doc for this post by the authenticated user and with comment field null,
+            so to update it, else create a new one
+        */
+        let likeDoc = await Like.findOne({ post: postId, user: req.user.id, comment: replyId });
+        // if the user is doing the same action (liking a post he already liked or the opposite)
+        if(likeDoc && likeDoc.isLiked === isLiked) return res.status(409).json({ msg: `You already ${action}d this comment` });
+
+        if(!likeDoc){
+            likeDoc = new Like({
+                user: req.user.id,
+                post: postId,
+                comment: replyId,
+                isLiked
+            });
+        } else {
+            likeDoc.isLiked = isLiked;
+            isLiked ? reply.dislikes-- : reply.likes--;
+        }
+
+        isLiked ? reply.likes++ : reply.dislikes++;
+        
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        await likeDoc.save({ session });
+        await reply.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return res.sendStatus(204);
+    } catch (error) {
+        if(session !== null){
+            await session.abortTransaction();
+            session.endSession();
+        }
+        console.log(error);
+        return res.status(500).json(error);
+    }
+}
+
 export const deleteCommentReply = async (req, res) => {
     const { postId, commentId, replyId } = req.params;
     if(!mongoose.isValidObjectId(postId)) return res.status(400).json({ msg: "Invalid post id" });
