@@ -47,9 +47,8 @@ export const getPosts = async (req, res) => {
                 break
         }
     }
-    // { title: true, description: true, author: true, tags: true }
     try {
-        const posts = await Post.find(findQuery)
+        const posts = await Post.find(findQuery, { title: true, description: true, author: true, tags: true })
             .sort(sortQuery)
             .limit(limit)
             .populate('author', 'fullName profileImage')

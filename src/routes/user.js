@@ -12,6 +12,4 @@ router.get('/:userId', authenticateToken, getUser);
 
 router.get('/', authenticateToken, authorizeRoles(Roles.ADMIN, Roles.MODERATOR), getUsers);
 
-// router.get('/', authenticateToken, authorizeRoles(Roles.ADMIN, Roles.MODERATOR), getModerators); //Todo 
-
 export default router;

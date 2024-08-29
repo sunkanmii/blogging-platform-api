@@ -17,7 +17,9 @@ export const getUser = async (req, res) => {
 }
 
 export const getUsers = async (req, res) => {
-    const { limit = 10, cursor, sort = Sort.NEWEST } = req.query;
+    const { limit = 10, cursor, sort = Sort.NEWEST, role } = req.query;
+
+    if(![Roles.MODERATOR, Roles.USER].includes(role)) return res.status(403).json({ msg: "role query param is not valid, it should be either 'user' or 'moderator'" })
     
     if(isNaN(limit)) return res.status(400).json({ msg: "limit query param must be a number" });
 
@@ -33,7 +35,7 @@ export const getUsers = async (req, res) => {
             return res.status(400).json({ msg: "sort query param is not valid"})
     }
 
-    const findQuery = { role: Roles.USER };
+    const findQuery = { role };
     if(cursor){
         if(!mongoose.isValidObjectId(cursor)) return res.status(400).json({ msg: "cursor query param is not valid" });
         if(sort === Sort.NEWEST){
