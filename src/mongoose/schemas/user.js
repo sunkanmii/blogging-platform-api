@@ -1,4 +1,5 @@
 import mongoose, { Schema, SchemaTypes } from "mongoose";
+import Roles from "../../utils/roles.js";
 
 const userSchema = new Schema({
     fullName: {
@@ -18,9 +19,10 @@ const userSchema = new Schema({
         type: SchemaTypes.String,
         default: null
     },
-    isAdmin: {
-        type: SchemaTypes.Boolean,
-        default: false
+    role: {
+        type: SchemaTypes.String,
+        enum: Object.values(Roles),
+        default: Roles.USER
     },
     password: {
         type: SchemaTypes.String

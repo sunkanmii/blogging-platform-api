@@ -4,6 +4,8 @@ import { createComment, deleteComment, getComment, getComments, likeOrDislikeCom
 import authenticateToken from "../middleware/authenticateToken.js";
 import { commentCreationSchema, commentUpdateSchema, postCreationSchema, postUpdateScema, replyUpdateSchema } from "../validation/postSchemas.js";
 import { createCommentReply, deleteCommentReply, getCommentReplies, likeOrDislikeReply, updateCommentReply } from "../controllers/repliesController.js";
+import authorizeRoles from "../middleware/authorizeRoles.js";
+import Roles from "../utils/roles.js";
 
 const router = Router();
 
@@ -13,13 +15,13 @@ router.get('/', getPosts);
 
 router.get('/:postId', getPost);
 
-router.post('/', authenticateToken, postCreationSchema, createPost);
+router.post('/', authenticateToken, authorizeRoles(Roles.ADMIN, Roles.MODERATOR), postCreationSchema, createPost);
 
 router.post('/:postId/like', authenticateToken, likeOrDislikePost);
 
-router.patch('/:postId', authenticateToken, postUpdateScema, updatePost);
+router.patch('/:postId', authenticateToken, authorizeRoles(Roles.ADMIN, Roles.MODERATOR), postUpdateScema, updatePost);
 
-router.delete('/:postId', authenticateToken, deletePost);
+router.delete('/:postId', authenticateToken, authorizeRoles(Roles.ADMIN, Roles.MODERATOR), deletePost);
 
 // comments
 

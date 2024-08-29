@@ -4,6 +4,7 @@ import User from "../mongoose/schemas/user.js";
 import Comment from "../mongoose/schemas/comment.js"
 import Like from "../mongoose/schemas/like.js";
 import { matchedData, validationResult } from "express-validator";
+import Roles from "../utils/roles.js";
 
 export const getComments = async (req, res) => {
     // validate the post id
@@ -217,7 +218,7 @@ export const deleteComment = async (req, res) => {
         const comment = await Comment.findById(commentId);
         if(!comment) return res.status(404).json({ msg: "Comment not found" });
 
-        if(!req.user.isAdmin && (comment.owner.toString() !== req.user.id)) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to create a post.' });
+        if((Roles.USER === req.user.role) && (comment.owner.toString() !== req.user.id)) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to delete this comment' });
 
         post.comments--;
 

@@ -57,8 +57,6 @@ export const getPost = async (req, res) => {
 }
 
 export const createPost = async (req, res) => {
-    if(!req.user.isAdmin) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to create a post.' });
-
     const result = validationResult(req);
     if(!result.isEmpty()) {
         const errors = result.array();
@@ -88,8 +86,6 @@ export const createPost = async (req, res) => {
 }
 
 export const updatePost = async (req, res) => {
-    if(!req.user.isAdmin) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to create a post.' });
-
     if(!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ msg: "Invalid post id" });
 
     const result = validationResult(req);
@@ -125,8 +121,6 @@ export const updatePost = async (req, res) => {
 }
 
 export const deletePost = async (req, res) => {
-    if(!req.user.isAdmin) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to create a post.' });
-
     if(!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ msg: "Invalid post id" });
 
     let session = null;

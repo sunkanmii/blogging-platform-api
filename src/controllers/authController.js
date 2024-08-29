@@ -20,14 +20,14 @@ export const signup = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({ fullName, username, email, password: hashedPassword });
         await newUser.save();
-
+        
         const theUser = { 
             id: newUser._id,
             fullName: newUser.fullName, 
             username: newUser.username, 
             email: newUser.email, 
-            profileImage: null, 
-            isAdmin: false
+            profileImage: newUser.profileImage, 
+            role: newUser.role
         }
 
         const accessToken = generateAccessToken(theUser);
@@ -65,7 +65,7 @@ export const login = async (req, res) => {
             username: user.username, 
             email: user.email, 
             profileImage: user.profileImage, 
-            isAdmin: user.isAdmin 
+            role: user.role
         }
 
         const accessToken = generateAccessToken(theUser);
@@ -126,7 +126,7 @@ export const refreshToken = async (req,res) => {
                 username: foundUser.username, 
                 email: foundUser.email, 
                 profileImage: foundUser.profileImage, 
-                isAdmin: foundUser.isAdmin 
+                role: foundUser.role
             }
             const accessToken = generateAccessToken(theUser);
             return res.status(200).json({ accessToken });
