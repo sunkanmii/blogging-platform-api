@@ -4,7 +4,7 @@ import { matchedData, validationResult } from "express-validator";
 import Comment from "../mongoose/schemas/comment.js";
 import Post from "../mongoose/schemas/post.js";
 import Like from "../mongoose/schemas/like.js";
-import Roles from "../utils/roles.js";
+import { Roles } from "../utils/enums.js";
 
 export const getCommentReplies = async (req, res) => {
     if(!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ message: "Post id is not valid!" });

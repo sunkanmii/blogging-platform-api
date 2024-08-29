@@ -1,5 +1,5 @@
 import mongoose, { Schema, SchemaTypes } from "mongoose";
-import Roles from "../../utils/roles.js";
+import { Roles } from "../../utils/enums.js";
 
 const userSchema = new Schema({
     fullName: {

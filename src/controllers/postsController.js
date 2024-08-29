@@ -4,26 +4,55 @@ import User from "../mongoose/schemas/user.js";
 import Comment from "../mongoose/schemas/comment.js"
 import Like from "../mongoose/schemas/like.js";
 import { matchedData, validationResult } from "express-validator";
+import { Sort } from "../utils/enums.js";
 
 export const getPosts = async (req, res) => {
-    const { limit = 3, cursor } = req.query;
+    const { limit = 8, cursor, sort = Sort.NEWEST } = req.query;
 
     if(isNaN(limit)){
         return res.status(400).json({message: "limit should be a number"});
     }
 
-    const query = {};
+    // the sort query
+    const sortQuery = {};
+    switch (sort){
+        case Sort.NEWEST: sortQuery._id = -1; break;
+        case Sort.OLDEST: sortQuery._id = 1; break;
+        case Sort.TOP: sortQuery.likes = -1; sortQuery._id = -1; break
+        default: return res.status(400).json({ message: "Invalid sort query param value" });
+    }
+
+    const findQuery = {};
     if(cursor){
         if(!mongoose.isValidObjectId(cursor)){
             return res.status(400).json({message: "cursor is not valid"});
         }
-        query._id = { $lt: cursor };
+        
+        switch (sort){
+            case Sort.NEWEST: 
+                findQuery._id = { $lt: cursor }; 
+                break;
+            case Sort.OLDEST: 
+                findQuery._id = { $gt: cursor }; 
+                break;
+            case Sort.TOP: 
+                const lastPost = await Post.findById(cursor);
+                if(!lastPost){
+                    return res.status(400).json({ msg: "Cursor does not exist"});
+                }
+                findQuery.$or = [
+                    { likes: { $lt: lastPost.likes }},
+                    { likes: lastPost.likes, _id: { $lt: cursor }}
+                ]; 
+                break
+        }
     }
+    // { title: true, description: true, author: true, tags: true }
     try {
-        const posts = await Post.find(query, { title: true, description: true, author: true, tags: true })
-            .sort({ _id: -1 }) // Sort in descending order by _id (latest first)
+        const posts = await Post.find(findQuery)
+            .sort(sortQuery)
             .limit(limit)
-            .populate('author', 'fullName')
+            .populate('author', 'fullName profileImage')
             .exec();
 
         const nextCursor = (posts.length && posts.length === parseInt(limit)) ? posts[posts.length - 1]._id : null;
@@ -34,7 +63,7 @@ export const getPosts = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ error: `Internal server error: ${error.message}` });
     }
 }
 
@@ -52,7 +81,7 @@ export const getPost = async (req, res) => {
         return res.status(200).json(foundPost);
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ error: `Internal server error: ${error.message}` });
     }
 }
 
@@ -81,7 +110,7 @@ export const createPost = async (req, res) => {
         return res.status(201).json({ message: 'Post created successfully.' });
     } catch (error) {
         console.log(error);
-        return res.json({ message: error.message });  
+        return res.status(500).json({ error: `Internal server error: ${error.message}` });  
     }
 }
 
@@ -116,7 +145,7 @@ export const updatePost = async (req, res) => {
         return res.sendStatus(204);
     } catch (error) {
         console.log(error);
-        return res.status(500).json(error);
+        return res.status(500).json({ error: `Internal server error: ${error.message}` });
     }
 }
 
@@ -147,7 +176,7 @@ export const deletePost = async (req, res) => {
         }
 
         console.log(error);
-        return res.status(500).json(error);
+        return res.status(500).json({ error: `Internal server error: ${error.message}` });
     }
 }
 
@@ -204,6 +233,6 @@ export const likeOrDislikePost = async (req, res) => {
             session.endSession();
         }
         console.log(error);
-        return res.status(500).json(error);
+        return res.status(500).json({ error: `Internal server error: ${error.message}` });
     }
 }

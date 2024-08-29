@@ -5,7 +5,7 @@ import authenticateToken from "../middleware/authenticateToken.js";
 import { commentCreationSchema, commentUpdateSchema, postCreationSchema, postUpdateScema, replyUpdateSchema } from "../validation/postSchemas.js";
 import { createCommentReply, deleteCommentReply, getCommentReplies, likeOrDislikeReply, updateCommentReply } from "../controllers/repliesController.js";
 import authorizeRoles from "../middleware/authorizeRoles.js";
-import Roles from "../utils/roles.js";
+import { Roles } from "../utils/enums.js";
 
 const router = Router();
 
