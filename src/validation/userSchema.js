@@ -3,10 +3,6 @@ import User from "../mongoose/schemas/user.js";
 import { Roles } from "../utils/enums.js";
 
 export const userUpdateSchema = [
-    param('userId')
-        .trim()
-        .isMongoId()
-        .withMessage('Invalid user id'),
     body('fullName')
         .trim()
         .notEmpty()

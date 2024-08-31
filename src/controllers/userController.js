@@ -6,6 +6,7 @@ import { matchedData, validationResult } from "express-validator";
 
 export const getUser = async (req, res) => {
     const userId = req.params.userId ?? req.user.id;
+    
     if(!mongoose.isValidObjectId(userId)) return res.status(400).json({ msg: "User id is not valid" });
 
     try {
@@ -71,7 +72,6 @@ export const updateUser = async (req, res) => {
         console.log(errors);
         
         const errorMessages = {};
-        errorMessages.userId = errors.find(error => error.path === "userId")?.msg;
         errorMessages.fullName = errors.find(error => error.path === "fullName")?.msg;
         errorMessages.username = errors.find(error => error.path === "username")?.msg;
         errorMessages.email = errors.find(error => error.path === "email")?.msg;
@@ -81,16 +81,12 @@ export const updateUser = async (req, res) => {
     }
     const data = matchedData(req);
 
-    if(req.user.id !== data.userId){
-        return res.status(403).json({ msg: "Forbidden: You do not have the necessary permissions to update this user." })
-    }
-
-    if(Object.keys(data).length <= 1) {
+    if(Object.keys(data).length === 0) {
         return res.status(400).json({ msg: "You have to add fields to update" });
     }
 
     try {
-        const user = await User.findById(data.userId);
+        const user = await User.findById(req.user.id);
         if(!user) return res.status(404).json({ msg: "User not found!" });
 
         if(data.fullName) user.fullName = data.fullName;
@@ -112,12 +108,8 @@ export const updateUser = async (req, res) => {
 }
 
 export const deleteUser = async (req, res) => {
-    const userId = req.params.userId;
+    const userId = req.user.id;
     if(!mongoose.isValidObjectId(userId)) return res.status(400).json({ msg: "Invalid user id" });
-
-    if(req.user.id !== userId){
-        return res.status(403).json({ msg: "Forbidden: You do not have the necessary permissions to delete this user." })
-    }
 
     try {
         const user = await User.findById(userId);

@@ -71,7 +71,7 @@ export const getPost = async (req, res) => {
         return res.status(400).json({message: "Post id is not valid!"});
     }
     try {
-        const foundPost = await Post.findById(req.params.postId, { __v: false })
+        const foundPost = await Post.findById(req.params.postId, { __v: false, updatedAt: false })
             .populate('author', 'fullName profileImage')
             .lean();       
 

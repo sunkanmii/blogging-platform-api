@@ -52,7 +52,7 @@ export const getComments = async (req, res) => {
     }
 
     try {
-        const comments = await Comment.find(query, { __v: false })
+        const comments = await Comment.find(query, { __v: false, replyTo: false, updatedAt: false })
             .sort(sortQuery)
             .limit(limit)
             .populate('owner', 'username profileImage')
@@ -74,10 +74,10 @@ export const getComment = async (req, res) => {
     if(!mongoose.isValidObjectId(req.params.commentId)) return res.status(400).json({ message: "Comment id is not valid!" });
 
     try {
-        const comment = await Comment.findOne({ _id: req.params.commentId, post: req.params.postId, replyTo: null }, { __v: false, replyTo: false })
+        const comment = await Comment.findOne({ _id: req.params.commentId, post: req.params.postId, replyTo: null }, { __v: false, replyTo: false, updatedAt: false })
             .populate('owner', 'username profileImage')
             .lean();
-
+        
         if(!comment) return res.status(404).json({ msg: "Comment not found" });
 
         return res.status(200).json(comment);

@@ -7,16 +7,16 @@ import { changeUserRoleSchema, userUpdateSchema } from "../validation/userSchema
 
 const router = Router();
 
+router.get('/', authenticateToken, authorizeRoles(Roles.ADMIN, Roles.MODERATOR), getUsers);
+
 router.get('/me', authenticateToken, getUser);
 
 router.get('/:userId', authenticateToken, getUser);
 
-router.get('/', authenticateToken, authorizeRoles(Roles.ADMIN, Roles.MODERATOR), getUsers);
+router.patch('/me', authenticateToken, userUpdateSchema, updateUser);
 
-router.patch('/:userId', authenticateToken, userUpdateSchema, updateUser);
+router.delete('/me', authenticateToken, deleteUser);
 
 router.post('/:userId/role', authenticateToken, authorizeRoles(Roles.ADMIN), changeUserRoleSchema, changeUserRole);
-
-router.delete('/:userId', authenticateToken, deleteUser);
 
 export default router;
