@@ -2,7 +2,8 @@ import { Router } from "express";
 import { createPost, deletePost, getPost, getPosts, likeOrDislikePost, updatePost } from "../controllers/postsController.js";
 import { createComment, deleteComment, getComment, getComments, likeOrDislikeComment, updateComment } from "../controllers/commentsController.js";
 import authenticateToken from "../middleware/authenticateToken.js";
-import { commentCreationSchema, commentUpdateSchema, postCreationSchema, postUpdateScema, replyUpdateSchema } from "../validation/postSchemas.js";
+import { getPostSchema, postCreationSchema, postUpdateScema } from "../validation/postSchemas.js";
+import { commentCreationSchema, commentUpdateSchema, replyUpdateSchema } from "../validation/commentSchema.js";
 import { createCommentReply, deleteCommentReply, getCommentReplies, likeOrDislikeReply, updateCommentReply } from "../controllers/repliesController.js";
 import authorizeRoles from "../middleware/authorizeRoles.js";
 import { Roles } from "../utils/enums.js";
@@ -11,7 +12,7 @@ const router = Router();
 
 // posts
 
-router.get('/', getPosts);
+router.get('/', getPostSchema, getPosts);
 
 router.get('/:postId', getPost);
 

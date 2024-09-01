@@ -108,7 +108,7 @@ export const updateUser = async (req, res) => {
 }
 
 export const deleteUser = async (req, res) => {
-    const userId = req.user.id;
+    const userId = req.params.userId ?? req.user.id;
     if(!mongoose.isValidObjectId(userId)) return res.status(400).json({ msg: "Invalid user id" });
 
     try {

@@ -1,4 +1,6 @@
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
+import { Sort } from '../utils/enums.js';
+import mongoose from 'mongoose';
 
 const validateContentBlock = (block) => {
     // Perform validation for a single content block
@@ -107,48 +109,35 @@ export const postUpdateScema = [
         .withMessage('Each tag must be a string')
 ];
 
-export const commentCreationSchema = [
-    param('postId')
-        .isMongoId()
-        .withMessage('Invalid post id'),
-    body('body')
-        .trim()
-        .notEmpty()
-        .withMessage('Comment must not be empty')
-        .isString()
-        .withMessage('Comment must be a string')   
-];
+export const getPostSchema = [
+    query('limit')
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage('Limit should be a positive integer'),
 
-// can also be used as a comment reply creation schema
-export const commentUpdateSchema = [
-    param('postId')
-        .isMongoId()
-        .withMessage('Invalid post id'),
-    param('commentId')
-        .isMongoId()
-        .withMessage('Invalid comment id'),
-    body('body')
-        .trim()
-        .notEmpty()
-        .withMessage('Comment must not be empty')
-        .isString()
-        .withMessage('Comment must be a string')   
-];
+    query('cursor')
+        .optional()
+        .custom((value) => {
+            if (!mongoose.isValidObjectId(value)) {
+                throw new Error('Cursor is not valid');
+            }
+            return true;
+        }),
 
-export const replyUpdateSchema = [
-    param('postId')
-        .isMongoId()
-        .withMessage('Invalid post id'),
-    param('commentId')
-        .isMongoId()
-        .withMessage('Invalid comment id'),
-    param('replyId')
-        .isMongoId()
-        .withMessage('Invalid comment id'),
-    body('body')
-        .trim()
-        .notEmpty()
-        .withMessage('Comment must not be empty')
+    query('sort')
+        .optional()
+        .isIn([Sort.NEWEST, Sort.OLDEST, Sort.TOP])
+        .withMessage('Invalid sort query param value'),
+
+    query('search')
+        .optional()
         .isString()
-        .withMessage('Comment must be a string')   
+        .trim()
+        .withMessage('Search query param must be a string'),
+
+    query('tags')
+        .optional()
+        .isString()
+        .matches(/^[a-zA-Z0-9,]*$/)
+        .withMessage('Tags query param should be a comma-separated list of words')
 ];

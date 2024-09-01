@@ -17,6 +17,8 @@ router.patch('/me', authenticateToken, userUpdateSchema, updateUser);
 
 router.delete('/me', authenticateToken, deleteUser);
 
+router.delete('/:userId', authenticateToken, authorizeRoles(Roles.ADMIN, Roles.MODERATOR), deleteUser);
+
 router.post('/:userId/role', authenticateToken, authorizeRoles(Roles.ADMIN), changeUserRoleSchema, changeUserRole);
 
 export default router;
