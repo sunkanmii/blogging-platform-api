@@ -68,9 +68,7 @@ export const updateUser = async (req, res) => {
     const result = validationResult(req);
 
     if(!result.isEmpty()){
-        const errors = result.array();
-        console.log(errors);
-        
+        const errors = result.array();        
         const errorMessages = {};
         errorMessages.fullName = errors.find(error => error.path === "fullName")?.msg;
         errorMessages.username = errors.find(error => error.path === "username")?.msg;

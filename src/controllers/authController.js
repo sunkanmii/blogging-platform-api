@@ -1,8 +1,12 @@
 import bcrypt from 'bcrypt';
+import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import User from '../mongoose/schemas/user.js';
 import { matchedData, validationResult } from "express-validator";
 import { generateAccessToken, generateRefreshToken } from '../utils/auth.js';
+import nodemailer from 'nodemailer';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 export const signup = async (req, res) => {
     const result = validationResult(req);
@@ -134,5 +138,100 @@ export const refreshToken = async (req,res) => {
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: `Error occured while refresh token process: ${error.message}` }); 
+    }
+}
+
+export const generateTokenForPasswordReset = async (req, res) => {
+    const result = validationResult(req);
+    if(!result.isEmpty()) return res.status(400).json({ errorMessages: result.array() });
+    const { email } = matchedData(req);
+    
+    try {
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(200).json({ message: 'If the email exists in our system, you will receive a password reset link shortly.' });
+        }
+
+        const token = crypto.randomBytes(32).toString('hex');
+        user.resetPasswordToken = token;
+        user.resetPasswordExpires = Date.now() + 3600000 // 1 hour
+        await user.save();
+        
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_APP_PASSWORD
+            }
+        });
+
+        const resetLink = `${process.env.FRONTEND_URL}/password-reset/${token}`;
+
+        const emailHtml = readFileSync(path.join(import.meta.dirname, '../templates/emails/password-reset.html'), 'utf-8');
+        
+        const info = await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Reset your password",
+            text: `You recently requested to reset your password. \nClick on the link below to proceed: \n${resetLink} \nThis link will expire after one hour.\nIf you didn\'t request this, please ignore this email.`,
+            html: emailHtml.replace('{{resetLink}}', resetLink)
+        })
+
+        res.status(200).json({ message: 'If the email exists in our system, you will receive a password reset link shortly.' });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: `Error occured: ${error.message}` }); 
+    }
+}
+
+export const validatePasswordResetToken = async (req, res) => {
+    const token = req.params.token;
+    try {
+        const user = await User.findOne({ resetPasswordToken: token });
+
+        if(!user){
+            return res.status(404).json({ msg: "Token is not found or invalid" });
+        }
+
+        if(user.resetPasswordExpires < Date.now()){
+            return res.status(400).json({ msg: "Token has expired" });
+        }
+
+        return res.sendStatus(200);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: `Error occured: ${error.message}` }); 
+    }
+}
+
+export const updatePassword = async (req, res) => {
+    const result = validationResult(req);
+    if(!result.isEmpty()){
+        return res.status(400).json({ errorMessages: result.array() });
+    }
+    const { token, password } = matchedData(req);
+    try {
+        const user = await User.findOne({ resetPasswordToken: token });
+        if(!user) {
+            return res.status(404).json({ msg: "Token is not found or invalid" });
+        }
+
+        if(user.resetPasswordExpires < Date.now()){
+            return res.status(400).json({ msg: "Token has expired" });
+        }
+
+        const hash = await bcrypt.hash(password, 10);
+
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+        user.password = hash;
+
+        await user.save();
+
+        return res.status(200).json({ msg: "Password updated successfully" });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: `Error occured: ${error.message}` }); 
     }
 }
