@@ -4,9 +4,7 @@ import jwt from 'jsonwebtoken';
 import User from '../mongoose/schemas/user.js';
 import { matchedData, validationResult } from "express-validator";
 import { generateAccessToken, generateRefreshToken } from '../utils/auth.js';
-import nodemailer from 'nodemailer';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
+import { sendActivationEmail, sendResetPasswordEmail } from '../utils/email.js';
 
 export const signup = async (req, res) => {
     const result = validationResult(req);
@@ -19,28 +17,26 @@ export const signup = async (req, res) => {
         errorMessages.password = errors.find(error => error.path === "password")?.msg;
         return res.status(400).json({ errorMessages });
     }
+    const { fullName, username, email, password } = matchedData(req);
     try {
-        const { fullName, username, email, password } = matchedData(req);
+
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ fullName, username, email, password: hashedPassword });
-        await newUser.save();
-        
-        const theUser = { 
-            id: newUser._id,
-            fullName: newUser.fullName, 
-            username: newUser.username, 
-            email: newUser.email, 
-            profileImage: newUser.profileImage, 
-            role: newUser.role
-        }
+        const token = crypto.randomBytes(32).toString('hex');
 
-        const accessToken = generateAccessToken(theUser);
-        const refreshToken = generateRefreshToken(theUser);
+        const newUser = new User({ 
+            fullName, 
+            username, 
+            email, 
+            password: hashedPassword,
+            activationToken: token,
+            activationTokenExpires: Date.now() + (3600000 * 24) // 24 hours
+        });
 
-        newUser.refreshTokens.push(refreshToken);
         await newUser.save();
 
-        return res.status(201).json({ accessToken, refreshToken });
+        await sendActivationEmail(email, token);
+
+        return res.status(201).json({ msg: "Signup successful! Please check your email to activate your account." });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: `Error occured while signup process ${error.message}` });
@@ -49,7 +45,7 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
     const result = validationResult(req);
-    if (!result.isEmpty()) {
+    if (!result.isEmpty()) {                
         return res.status(400).json({ errorMessage: 'Invalid credentials' });
     }
     const { email, password } = matchedData(req);
@@ -61,6 +57,10 @@ export const login = async (req, res) => {
         const isMatched = await bcrypt.compare(password, user.password);
         if (!isMatched) {
             return res.status(400).json({ errorMessage: 'Invalid credentials' });
+        }
+
+        if(!user.isActive){
+            return res.status(403).json({ msg: "Your account is not activated. Please check your email for the activation link." });
         }
 
         const theUser = { 
@@ -82,6 +82,64 @@ export const login = async (req, res) => {
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: `Error occured while login process: ${error.message}` });
+    }
+}
+
+export const activateAccount = async (req, res) => {
+    const token = req.params.token;
+
+    try {
+        const user = await User.findOne({ activationToken: token });
+        if(!user){
+            return res.status(404).json({ msg: "Token is not found or invalid" });
+        }
+
+        if(user.activationTokenExpires < Date.now()){
+            user.activationToken = null;
+            user.activationTokenExpires = null;
+            await user.save();
+            return res.status(400).json({ msg: "Token has expired" });
+        }
+
+        user.activationToken = null;
+        user.activationTokenExpires = null;
+        user.isActive = true;
+        
+        await user.save();
+
+        return res.status(200).json({ msg: "Your account has been successfully activated. Please log in to continue." });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: `Error occured: ${error.message}` }); 
+    }
+}
+
+export const resendActivationEmail = async (req, res) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+        return res.status(400).json({ errorMessages: result.array() });
+    }
+    const { email } = matchedData(req);
+    try {
+        const user = await User.findOne({ email });
+
+        if(!user){
+            return res.status(400).json({ msg: "User not found" });
+        }
+
+        const token = crypto.randomBytes(32).toString('hex');
+
+        user.activationToken = token,
+        user.activationTokenExpires = Date.now() + (3600000 * 24) // 24 hours
+
+        await user.save();
+
+        await sendActivationEmail(email, token);
+
+        return res.status(200).json({ msg: "Email was sent! Please check your email to activate your account." });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: `Error occured while signup process ${error.message}` });
     }
 }
 
@@ -158,25 +216,7 @@ export const generateTokenForPasswordReset = async (req, res) => {
         user.resetPasswordExpires = Date.now() + 3600000 // 1 hour
         await user.save();
         
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_APP_PASSWORD
-            }
-        });
-
-        const resetLink = `${process.env.FRONTEND_URL}/password-reset/${token}`;
-
-        const emailHtml = readFileSync(path.join(import.meta.dirname, '../templates/emails/password-reset.html'), 'utf-8');
-        
-        const info = await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: "Reset your password",
-            text: `You recently requested to reset your password. \nClick on the link below to proceed: \n${resetLink} \nThis link will expire after one hour.\nIf you didn\'t request this, please ignore this email.`,
-            html: emailHtml.replace('{{resetLink}}', resetLink)
-        })
+        await sendResetPasswordEmail(email, token);
 
         res.status(200).json({ message: 'If the email exists in our system, you will receive a password reset link shortly.' });
     } catch (error) {
@@ -195,6 +235,9 @@ export const validatePasswordResetToken = async (req, res) => {
         }
 
         if(user.resetPasswordExpires < Date.now()){
+            user.resetPasswordExpires = null;
+            user.resetPasswordToken = null;
+            await user.save();
             return res.status(400).json({ msg: "Token has expired" });
         }
 

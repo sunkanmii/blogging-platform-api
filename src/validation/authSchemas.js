@@ -39,7 +39,7 @@ export const signupSchema = [
     ];
 
 export const loginSchema = [
-    body('eamil')
+    body('email')
         .normalizeEmail()
         .isEmail()
         .withMessage('Email address is not valid'),

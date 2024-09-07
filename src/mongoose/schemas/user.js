@@ -36,7 +36,19 @@ const userSchema = new Schema({
         type: SchemaTypes.String,
         default: null
     },
-    refreshTokens: [SchemaTypes.String]
+    refreshTokens: [SchemaTypes.String],
+    isActive: {
+        type: SchemaTypes.Boolean,
+        default: false
+    },
+    activationToken: {
+        type: SchemaTypes.String,
+        default: null
+    },
+    activationTokenExpires: {
+        type: SchemaTypes.String,
+        default: null
+    }
 });
 
 export default mongoose.model('User', userSchema);
