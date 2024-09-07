@@ -20,7 +20,7 @@ export const signup = async (req, res) => {
     const { fullName, username, email, password } = matchedData(req);
     try {
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 12);
         const token = crypto.randomBytes(32).toString('hex');
 
         const newUser = new User({ 
@@ -78,7 +78,14 @@ export const login = async (req, res) => {
         user.refreshTokens.push(refreshToken);
         await user.save();
 
-        return res.status(200).json({ accessToken, refreshToken });
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            sameSite: 'None',
+            secure: process.env.NODE_ENV === 'production',  // Only use secure cookies in production
+            maxAge: 3 * 24 * 60 * 60 * 1000 // 3 days
+        });
+
+        return res.status(200).json({ accessToken });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: `Error occured while login process: ${error.message}` });
@@ -144,17 +151,32 @@ export const resendActivationEmail = async (req, res) => {
 }
 
 export const logout = async (req, res) => {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies.refreshToken;
 
-    if(!refreshToken) return res.status(400).json({ message: 'Refresh token is required' });
+    if (!refreshToken) {
+        return res.status(200).json({ message: 'Already logged out' });
+    }
 
     try {
         const foundUser = await User.findOne({ refreshTokens: {$in: [refreshToken]} });
 
-        if(!foundUser) return res.status(401).json({ message: 'refresh token is not found' });
+        if(!foundUser) {
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'None'
+            });
+            return res.status(401).json({ message: 'refresh token is not found' });
+        }
 
         foundUser.refreshTokens.pull(refreshToken);
         await foundUser.save();
+
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'None'
+        });
 
         return res.status(200).json({ message: 'Logout successful' });
     } catch (error) {
@@ -164,14 +186,23 @@ export const logout = async (req, res) => {
 }
 
 export const refreshToken = async (req,res) => {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies.refreshToken;
 
-    if(!refreshToken) return res.status(400).json({ message: 'Refresh token is required' });
+    if (!refreshToken) {
+        return res.status(401).json({ message: 'No refresh token provided, please log in again' });
+    }
 
     try {
         const foundUser = await User.findOne({ refreshTokens: {$in: [refreshToken]} });
 
-        if(!foundUser) return res.status(401).json({ message: 'refresh token is not found' });
+        if(!foundUser) {
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'None'
+            });
+            return res.status(401).json({ message: 'refresh token is not found' });
+        }
 
         jwt.verify(refreshToken, process.env.JWT_SECRET_KEY, async (error) => {
             if(error){
@@ -179,6 +210,11 @@ export const refreshToken = async (req,res) => {
                     foundUser.refreshTokens.pull(refreshToken);
                     await foundUser.save();
                 }
+                res.clearCookie('refreshToken', {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'None'
+                });
                 return res.status(401).json({ message: 'Invalid or expired refresh token'});
             }
 
@@ -264,7 +300,7 @@ export const updatePassword = async (req, res) => {
             return res.status(400).json({ msg: "Token has expired" });
         }
 
-        const hash = await bcrypt.hash(password, 10);
+        const hash = await bcrypt.hash(password, 12);
 
         user.resetPasswordToken = null;
         user.resetPasswordExpires = null;

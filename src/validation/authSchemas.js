@@ -52,6 +52,7 @@ export const loginSchema = [
         minNumbers: 1,
         minSymbols: 1
     })
+    .escape()
     .withMessage('Password must be at least 8 characters long and include one lowercase letter, one uppercase letter, one number, and one symbol.')
 ];
 
@@ -76,5 +77,6 @@ export const passwordSchema = [
             minNumbers: 1,
             minSymbols: 1
         })
+        .escape()
         .withMessage('Password must be at least 8 characters long and include one lowercase letter, one uppercase letter, one number, and one symbol.')
 ];

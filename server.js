@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import routes from "./src/routes/routes.js";
 import morgan from "morgan";
 import cors from "cors";
+import helmet from "helmet";
+import cookieParser from "cookie-parser";
 
 // mongoose.connect('mongodb://localhost:27017/blog')
 //     .then(() => console.log("connected to the database"))
@@ -16,7 +18,9 @@ const port = process.env.PORT || 5000;
 
 const app = express();
 
-app.disable('x-powered-by');
+app.use(cookieParser());
+
+app.use(helmet());
 
 app.use(cors());
 
