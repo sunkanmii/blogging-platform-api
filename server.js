@@ -6,10 +6,6 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 
-// mongoose.connect('mongodb://localhost:27017/blog')
-//     .then(() => console.log("connected to the database"))
-//     .catch(error => console.log(error));
-
 mongoose.connect(process.env.MONGODB_CONNECTION_STRING)
     .then(() => console.log("connected to the database"))
     .catch(error => console.log(error));
@@ -29,5 +25,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 app.use('/api', routes);
+
+app.use('*', (req, res) => res.status(404).json({ msg: 'Not found' }));
 
 app.listen(port, () => console.log(`server running on port ${port}`));

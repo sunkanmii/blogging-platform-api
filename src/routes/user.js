@@ -7,18 +7,20 @@ import { changeUserRoleSchema, userUpdateSchema } from "../validation/userSchema
 
 const router = Router();
 
-router.get('/', authenticateToken, authorizeRoles(Roles.ADMIN, Roles.MODERATOR), getUsers);
+router.use(authenticateToken);
 
-router.get('/me', authenticateToken, getUser);
+router.get('/', authorizeRoles(Roles.ADMIN, Roles.MODERATOR), getUsers);
 
-router.get('/:userId', authenticateToken, getUser);
+router.get('/me', getUser);
 
-router.patch('/me', authenticateToken, userUpdateSchema, updateUser);
+router.get('/:userId', getUser);
 
-router.delete('/me', authenticateToken, deleteUser);
+router.patch('/me', userUpdateSchema, updateUser);
 
-router.delete('/:userId', authenticateToken, authorizeRoles(Roles.ADMIN, Roles.MODERATOR), deleteUser);
+router.delete('/me', deleteUser);
 
-router.post('/:userId/role', authenticateToken, authorizeRoles(Roles.ADMIN), changeUserRoleSchema, changeUserRole);
+router.delete('/:userId', authorizeRoles(Roles.ADMIN, Roles.MODERATOR), deleteUser);
+
+router.post('/:userId/role', authorizeRoles(Roles.ADMIN), changeUserRoleSchema, changeUserRole);
 
 export default router;
