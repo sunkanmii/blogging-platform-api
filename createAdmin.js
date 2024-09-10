@@ -60,7 +60,7 @@ const createAdmin = async () => {
         fullName,
         username,
         email,
-        hash,
+        password: hash,
         role: Roles.ADMIN,
         isActive: true 
     })
