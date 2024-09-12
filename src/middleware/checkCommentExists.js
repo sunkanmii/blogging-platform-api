@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Comment from "../mongoose/schemas/comment";
+import Comment from "../mongoose/schemas/comment.js";
 
 const checkCommentExists = async (req, res, next) => {
     if(!mongoose.isValidObjectId(req.params.commentId)) return res.status(400).json({ message: "Comment id is not valid!" });

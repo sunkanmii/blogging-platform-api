@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Post from "../mongoose/schemas/post";
+import Post from "../mongoose/schemas/post.js";
 
 const checkPostExists = async (req, res, next) => {
     if (!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ message: "Post id is not valid!" });
