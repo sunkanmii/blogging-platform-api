@@ -7,9 +7,6 @@ import Like from "../mongoose/schemas/like.js";
 import { Roles } from "../utils/enums.js";
 
 export const getCommentReplies = async (req, res) => {
-    if(!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ message: "Post id is not valid!" });
-    if(!mongoose.isValidObjectId(req.params.commentId)) return res.status(400).json({ message: "Comment id is not valid!" });
-
     try {
         const replies = await Comment.find({ post: req.params.postId, replyTo: req.params.commentId }, { __v: false, replyTo: false })
             .populate("owner", "username profileImage")
@@ -31,10 +28,10 @@ export const createCommentReply = async (req, res) => {
     let session = null;
     try {
         const post = await Post.findById(postId);
-        if(!post) return res.status(400).json({ msg: "Post not found" });
+        if(!post) return res.status(404).json({ message: "Post not found" });
 
         const comment = await Comment.findOne({ _id: commentId, post: postId });
-        if(!comment) return res.status(404).json({ msg: "Comment not found" });
+        if(!comment) return res.status(404).json({ message: "Comment not found" });
 
         const reply = new Comment({
             post: postId,
@@ -55,7 +52,7 @@ export const createCommentReply = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
-        return res.status(201).json({ msg: 'comment reply was created successfuly' });
+        return res.status(201).json({ message: 'comment reply was created successfuly' });
     } catch (error) {
         if(session !== null){
             await session.abortTransaction();
@@ -72,7 +69,7 @@ export const updateCommentReply = async (req, res) => {
     const { postId, commentId, replyId, body } = matchedData(req);    
     try {
         const reply = await Comment.findOne({ _id: replyId, post: postId, replyTo: commentId });
-        if(!reply) return res.status(404).json({ msg: "Comment reply not found" });
+        if(!reply) return res.status(404).json({ message: "Comment reply not found" });
         if(reply.owner.toString() !== req.user.id) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to update this comment.' });
         reply.body = body;
         await reply.save();
@@ -89,19 +86,17 @@ export const likeOrDislikeReply = async (req, res) => {
     const commentId = req.params.commentId;
     const replyId = req.params.replyId;
 
-    if(!mongoose.isValidObjectId(postId)) return res.status(400).json({ msg: "Invalid post id" });
-    if(!mongoose.isValidObjectId(commentId)) return res.status(400).json({ msg: "Invalid comment id" });
-    if(!mongoose.isValidObjectId(replyId)) return res.status(400).json({ msg: "Invalid comment reply id" });
+    if(!mongoose.isValidObjectId(replyId)) return res.status(400).json({ message: "Invalid comment reply id" });
 
     const { action } = req.body;
 
-    if(!["like", "dislike"].includes(action)) return res.status(400).json({ msg: "Invalid action. Must be 'like' or 'dislike'." });
+    if(!["like", "dislike"].includes(action)) return res.status(400).json({ message: "Invalid action. Must be 'like' or 'dislike'." });
 
     let session = null;
 
     try {
         const reply = await Comment.findOne({ _id: replyId, post: postId, replyTo: commentId });
-        if(!reply) return res.status(404).json({ msg: "Comment not found" });
+        if(!reply) return res.status(404).json({ message: "Comment not found" });
 
         const isLiked = action === "like";
 
@@ -111,7 +106,7 @@ export const likeOrDislikeReply = async (req, res) => {
         */
         let likeDoc = await Like.findOne({ post: postId, user: req.user.id, comment: replyId });
         // if the user is doing the same action (liking a post he already liked or the opposite)
-        if(likeDoc && likeDoc.isLiked === isLiked) return res.status(409).json({ msg: `You already ${action}d this comment` });
+        if(likeDoc && likeDoc.isLiked === isLiked) return res.status(409).json({ message: `You already ${action}d this comment` });
 
         if(!likeDoc){
             likeDoc = new Like({
@@ -149,21 +144,21 @@ export const likeOrDislikeReply = async (req, res) => {
 
 export const deleteCommentReply = async (req, res) => {
     const { postId, commentId, replyId } = req.params;
-    if(!mongoose.isValidObjectId(postId)) return res.status(400).json({ msg: "Invalid post id" });
-    if(!mongoose.isValidObjectId(commentId)) return res.status(400).json({ msg: "Invalid comment id" });
-    if(!mongoose.isValidObjectId(replyId)) return res.status(400).json({ msg: "Invalid comment reply id" });
+    if(!mongoose.isValidObjectId(postId)) return res.status(400).json({ message: "Invalid post id" });
+    if(!mongoose.isValidObjectId(commentId)) return res.status(400).json({ message: "Invalid comment id" });
+    if(!mongoose.isValidObjectId(replyId)) return res.status(400).json({ message: "Invalid comment reply id" });
     
     let session = null;
 
     try {
         const post = await Post.findById(postId);
-        if(!post) return res.status(400).json({ msg: "Post not found" });
+        if(!post) return res.status(404).json({ message: "Post not found" });
 
         const comment = await Comment.findById(commentId);
-        if(!comment) return res.status(404).json({ msg: "Comment not found" });
+        if(!comment) return res.status(404).json({ message: "Comment not found" });
 
         const reply = await Comment.findById(replyId);
-        if(!reply) return res.status(404).json({ msg: "reply not found" });
+        if(!reply) return res.status(404).json({ message: "reply not found" });
 
         if((Roles.USER === req.user.role) && (reply.owner.toString() !== req.user.id)) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to create a post.' });
 

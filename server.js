@@ -26,6 +26,6 @@ app.use(morgan('dev'));
 
 app.use('/api', routes);
 
-app.use('*', (req, res) => res.status(404).json({ msg: 'Not found' }));
+app.use('*', (req, res) => res.status(404).json({ message: 'Not found' }));
 
 app.listen(port, () => console.log(`server running on port ${port}`));

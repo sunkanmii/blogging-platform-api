@@ -7,11 +7,11 @@ import { matchedData, validationResult } from "express-validator";
 export const getUser = async (req, res) => {
     const userId = req.params.userId ?? req.user.id;
     
-    if(!mongoose.isValidObjectId(userId)) return res.status(400).json({ msg: "User id is not valid" });
+    if(!mongoose.isValidObjectId(userId)) return res.status(400).json({ message: "User id is not valid" });
 
     try {
         const user = await User.findById(userId, { fullName: true, username: true, email: true, profileImage: true, role: true });
-        if(!user) return res.status(404).json({ msg: "User not found" });
+        if(!user) return res.status(404).json({ message: "User not found" });
         return res.status(200).json(user);
     } catch (error) {
         console.log(error);
@@ -22,9 +22,9 @@ export const getUser = async (req, res) => {
 export const getUsers = async (req, res) => {
     const { limit = 10, cursor, sort = Sort.NEWEST, role } = req.query;
 
-    if(![Roles.MODERATOR, Roles.USER, Roles.ADMIN].includes(role)) return res.status(403).json({ msg: "role query param is not valid, it should be either 'user' or 'moderator'" })
+    if(![Roles.MODERATOR, Roles.USER, Roles.ADMIN].includes(role)) return res.status(403).json({ message: "role query param is not valid, it should be either 'user' or 'moderator'" })
     
-    if(isNaN(limit)) return res.status(400).json({ msg: "limit query param must be a number" });
+    if(isNaN(limit)) return res.status(400).json({ message: "limit query param must be a number" });
 
     const sortQuery = {};
     switch(sort){
@@ -35,12 +35,12 @@ export const getUsers = async (req, res) => {
             sortQuery._id = 1;
             break;
         default: 
-            return res.status(400).json({ msg: "sort query param is not valid"})
+            return res.status(400).json({ message: "sort query param is not valid"})
     }
 
     const findQuery = { role };
     if(cursor){
-        if(!mongoose.isValidObjectId(cursor)) return res.status(400).json({ msg: "cursor query param is not valid" });
+        if(!mongoose.isValidObjectId(cursor)) return res.status(400).json({ message: "cursor query param is not valid" });
         if(sort === Sort.NEWEST){
             findQuery._id = { $lt: cursor };
         } else {
@@ -80,12 +80,12 @@ export const updateUser = async (req, res) => {
     const data = matchedData(req);
 
     if(Object.keys(data).length === 0) {
-        return res.status(400).json({ msg: "You have to add fields to update" });
+        return res.status(400).json({ message: "You have to add fields to update" });
     }
 
     try {
         const user = await User.findById(req.user.id);
-        if(!user) return res.status(404).json({ msg: "User not found!" });
+        if(!user) return res.status(404).json({ message: "User not found!" });
 
         if(data.fullName) user.fullName = data.fullName;
         if(data.username) user.username = data.username;
@@ -98,7 +98,7 @@ export const updateUser = async (req, res) => {
 
         await user.save();
 
-        return res.status(200).json({ msg: "User updated successfully." });
+        return res.status(200).json({ message: "User updated successfully." });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error: `Internal server error: ${error.message}` });   
@@ -107,11 +107,11 @@ export const updateUser = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
     const userId = req.params.userId ?? req.user.id;
-    if(!mongoose.isValidObjectId(userId)) return res.status(400).json({ msg: "Invalid user id" });
+    if(!mongoose.isValidObjectId(userId)) return res.status(400).json({ message: "Invalid user id" });
 
     try {
         const user = await User.findById(userId);
-        if(!user) return res.status(404).json({ msg: "User not found" });
+        if(!user) return res.status(404).json({ message: "User not found" });
 
         await user.deleteOne();
 
@@ -130,14 +130,14 @@ export const changeUserRole = async (req, res) => {
     const { userId, role } = matchedData(req);
     try {
         const user = await User.findById(userId);
-        if(!user) return res.status(404).json({ msg: "User not found" });
+        if(!user) return res.status(404).json({ message: "User not found" });
 
-        if(user.role === role) return res.status(409).json({ msg: `User already have the '${role}' as the role value` });
+        if(user.role === role) return res.status(409).json({ message: `User already have the '${role}' as the role value` });
 
         user.role = role;
         await user.save();
 
-        return res.status(200).json({ msg: `user role was updated successfully to '${role}'` });
+        return res.status(200).json({ message: `user role was updated successfully to '${role}'` });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ error: `Internal server error: ${error.message}` });      

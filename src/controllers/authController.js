@@ -36,7 +36,7 @@ export const signup = async (req, res) => {
 
         await sendActivationEmail(email, token);
 
-        return res.status(201).json({ msg: "Signup successful! Please check your email to activate your account." });
+        return res.status(201).json({ message: "Signup successful! Please check your email to activate your account." });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: `Error occured while signup process ${error.message}` });
@@ -63,7 +63,7 @@ export const login = async (req, res) => {
         }
 
         if(!user.isActive){
-            return res.status(403).json({ msg: "Your account is not activated. Please check your email for the activation link." });
+            return res.status(403).json({ message: "Your account is not activated. Please check your email for the activation link." });
         }
 
         const theUser = { 
@@ -101,14 +101,14 @@ export const activateAccount = async (req, res) => {
     try {
         const user = await User.findOne({ activationToken: token });
         if(!user){
-            return res.status(404).json({ msg: "Token is not found or invalid" });
+            return res.status(404).json({ message: "Token is not found or invalid" });
         }
 
         if(user.activationTokenExpires < Date.now()){
             user.activationToken = null;
             user.activationTokenExpires = null;
             await user.save();
-            return res.status(400).json({ msg: "Token has expired" });
+            return res.status(400).json({ message: "Token has expired" });
         }
 
         user.activationToken = null;
@@ -117,7 +117,7 @@ export const activateAccount = async (req, res) => {
         
         await user.save();
 
-        return res.status(200).json({ msg: "Your account has been successfully activated. Please log in to continue." });
+        return res.status(200).json({ message: "Your account has been successfully activated. Please log in to continue." });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: `Error occured: ${error.message}` }); 
@@ -134,7 +134,7 @@ export const resendActivationEmail = async (req, res) => {
         const user = await User.findOne({ email });
 
         if(!user){
-            return res.status(400).json({ msg: "User not found" });
+            return res.status(400).json({ message: "User not found" });
         }
 
         const token = crypto.randomBytes(32).toString('hex');
@@ -146,7 +146,7 @@ export const resendActivationEmail = async (req, res) => {
 
         await sendActivationEmail(email, token);
 
-        return res.status(200).json({ msg: "Email was sent! Please check your email to activate your account." });
+        return res.status(200).json({ message: "Email was sent! Please check your email to activate your account." });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: `Error occured while signup process ${error.message}` });
@@ -270,14 +270,14 @@ export const validatePasswordResetToken = async (req, res) => {
         const user = await User.findOne({ resetPasswordToken: token });
 
         if(!user){
-            return res.status(404).json({ msg: "Token is not found or invalid" });
+            return res.status(404).json({ message: "Token is not found or invalid" });
         }
 
         if(user.resetPasswordExpires < Date.now()){
             user.resetPasswordExpires = null;
             user.resetPasswordToken = null;
             await user.save();
-            return res.status(400).json({ msg: "Token has expired" });
+            return res.status(400).json({ message: "Token has expired" });
         }
 
         return res.sendStatus(200);
@@ -296,11 +296,11 @@ export const updatePassword = async (req, res) => {
     try {
         const user = await User.findOne({ resetPasswordToken: token });
         if(!user) {
-            return res.status(404).json({ msg: "Token is not found or invalid" });
+            return res.status(404).json({ message: "Token is not found or invalid" });
         }
 
         if(user.resetPasswordExpires < Date.now()){
-            return res.status(400).json({ msg: "Token has expired" });
+            return res.status(400).json({ message: "Token has expired" });
         }
 
         const hash = await bcrypt.hash(password, 12);
@@ -311,7 +311,7 @@ export const updatePassword = async (req, res) => {
 
         await user.save();
 
-        return res.status(200).json({ msg: "Password updated successfully" });
+        return res.status(200).json({ message: "Password updated successfully" });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: `Error occured: ${error.message}` }); 

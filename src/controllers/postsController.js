@@ -47,7 +47,7 @@ export const getPosts = async (req, res) => {
             case Sort.TOP:
                 const lastPost = await Post.findById(cursor);
                 if (!lastPost) {
-                    return res.status(400).json({ msg: "Cursor does not exist" });
+                    return res.status(400).json({ message: "Cursor does not exist" });
                 }
                 findQuery.$or = [
                     { likes: { $lt: lastPost.likes } },
@@ -124,7 +124,7 @@ export const createPost = async (req, res) => {
 }
 
 export const updatePost = async (req, res) => {
-    if (!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ msg: "Invalid post id" });
+    if (!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ message: "Invalid post id" });
 
     const result = validationResult(req);
     if (!result.isEmpty()) {
@@ -138,13 +138,13 @@ export const updatePost = async (req, res) => {
     }
 
     const data = matchedData(req);
-    if (Object.keys(data).length === 0) return res.status(400).json({ msg: "No valid fields provided for update" })
+    if (Object.keys(data).length === 0) return res.status(400).json({ message: "No valid fields provided for update" })
 
     const { title, description, content, tags } = data;
 
     try {
         const post = await Post.findById(req.params.postId);
-        if (!post) return res.status(404).json({ msg: "Post not found" });
+        if (!post) return res.status(404).json({ message: "Post not found" });
 
         if (title) post.title = title;
         if (description) post.description = description;
@@ -161,13 +161,13 @@ export const updatePost = async (req, res) => {
 }
 
 export const deletePost = async (req, res) => {
-    if (!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ msg: "Invalid post id" });
+    if (!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ message: "Invalid post id" });
 
     let session = null;
 
     try {
         const post = await Post.findById(req.params.postId);
-        if (!post) return res.status(404).json({ msg: "Post not found" });
+        if (!post) return res.status(404).json({ message: "Post not found" });
 
         session = await mongoose.startSession();
         session.startTransaction();
@@ -193,17 +193,17 @@ export const deletePost = async (req, res) => {
 
 export const likeOrDislikePost = async (req, res) => {
     const postId = req.params.postId;
-    if (!mongoose.isValidObjectId(postId)) return res.status(400).json({ msg: "Invalid post id" });
+    if (!mongoose.isValidObjectId(postId)) return res.status(400).json({ message: "Invalid post id" });
 
     const { action } = req.body;
 
-    if (!["like", "dislike"].includes(action)) return res.status(400).json({ msg: "Invalid action. Must be 'like' or 'dislike'." });
+    if (!["like", "dislike"].includes(action)) return res.status(400).json({ message: "Invalid action. Must be 'like' or 'dislike'." });
 
     let session = null;
 
     try {
         const post = await Post.findById(postId);
-        if (!post) return res.status(404).json({ msg: "Post not found" });
+        if (!post) return res.status(404).json({ message: "Post not found" });
 
         const isLiked = action === "like";
 
@@ -213,7 +213,7 @@ export const likeOrDislikePost = async (req, res) => {
         */
         let likeDoc = await Like.findOne({ post: postId, user: req.user.id, comment: null });
         // if the user is doing the same action (liking a post he already liked or the opposite)
-        if (likeDoc && likeDoc.isLiked === isLiked) return res.status(409).json({ msg: `You already ${action}d this post` });
+        if (likeDoc && likeDoc.isLiked === isLiked) return res.status(409).json({ message: `You already ${action}d this post` });
 
         if (!likeDoc) {
             likeDoc = new Like({

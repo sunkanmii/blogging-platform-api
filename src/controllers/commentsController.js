@@ -7,11 +7,6 @@ import { matchedData, validationResult } from "express-validator";
 import { Roles, Sort } from "../utils/enums.js";
 
 export const getComments = async (req, res) => {
-    // validate the post id
-    if(!mongoose.isValidObjectId(req.params.postId)){
-        return res.status(400).json({ message: "Post id is not valid!" });
-    }
-
     const { limit = 10, cursor, sort = Sort.TOP } = req.query;
     // is the limit query param valid
     if(isNaN(limit)){
@@ -38,7 +33,7 @@ export const getComments = async (req, res) => {
         if(sort === Sort.TOP){
             const lastComment = await Comment.findById(cursor);
             if(!lastComment){
-                return res.status(400).json({ msg: "Cursor does not exist"});
+                return res.status(400).json({ message: "Cursor does not exist"});
             }
             query.$or = [
                 { likes: { $lt: lastComment.likes } },
@@ -70,16 +65,11 @@ export const getComments = async (req, res) => {
 }
 
 export const getComment = async (req, res) => {
-    if(!mongoose.isValidObjectId(req.params.postId)) return res.status(400).json({ message: "Post id is not valid!" });
-    if(!mongoose.isValidObjectId(req.params.commentId)) return res.status(400).json({ message: "Comment id is not valid!" });
-
     try {
         const comment = await Comment.findOne({ _id: req.params.commentId, post: req.params.postId, replyTo: null }, { __v: false, replyTo: false, updatedAt: false })
             .populate('owner', 'username profileImage')
             .lean();
         
-        if(!comment) return res.status(404).json({ msg: "Comment not found" });
-
         return res.status(200).json(comment);
     } catch (error) {
         console.log(error);
@@ -95,7 +85,7 @@ export const createComment = async (req, res) => {
     let session = null;    
     try {
         const post = await Post.findById(postId);
-        if(!post) return res.status(400).json({ msg: "Post not found" });
+        if(!post) return res.status(400).json({ message: "Post not found" });
         
         const comment = new Comment({
             post: postId,
@@ -113,7 +103,7 @@ export const createComment = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
-        return res.status(201).json({ msg: 'comment was created successfuly' });
+        return res.status(201).json({ message: 'comment was created successfuly' });
     } catch (error) {
         if(session !== null){
             await session.abortTransaction();
@@ -130,7 +120,7 @@ export const updateComment = async (req, res) => {
     const { postId, commentId, body } = matchedData(req);    
     try {
         const comment = await Comment.findOne({ _id: commentId, post: postId, replyTo: null });
-        if(!comment) return res.status(404).json({ msg: "Comment not found" });
+        if(!comment) return res.status(404).json({ message: "Comment not found" });
         if(comment.owner.toString() !== req.user.id) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to update this comment.' });
         comment.body = body;
         await comment.save();
@@ -146,18 +136,17 @@ export const likeOrDislikeComment = async (req, res) => {
     const postId = req.params.postId;
     const commentId = req.params.commentId;
 
-    if(!mongoose.isValidObjectId(postId)) return res.status(400).json({ msg: "Invalid post id" });
-    if(!mongoose.isValidObjectId(commentId)) return res.status(400).json({ msg: "Invalid comment id" });
+    if(!mongoose.isValidObjectId(commentId)) return res.status(400).json({ message: "Invalid comment id" });
 
     const { action } = req.body;
 
-    if(!["like", "dislike"].includes(action)) return res.status(400).json({ msg: "Invalid action. Must be 'like' or 'dislike'." });
+    if(!["like", "dislike"].includes(action)) return res.status(400).json({ message: "Invalid action. Must be 'like' or 'dislike'." });
 
     let session = null;
 
     try {
         const comment = await Comment.findOne({ _id: commentId, post: postId });
-        if(!comment) return res.status(404).json({ msg: "Comment not found" });
+        if(!comment) return res.status(404).json({ message: "Comment not found" });
 
         const isLiked = action === "like";
 
@@ -167,7 +156,7 @@ export const likeOrDislikeComment = async (req, res) => {
         */
         let likeDoc = await Like.findOne({ post: postId, user: req.user.id, comment: commentId });
         // if the user is doing the same action (liking a post he already liked or the opposite)
-        if(likeDoc && likeDoc.isLiked === isLiked) return res.status(409).json({ msg: `You already ${action}d this comment` });
+        if(likeDoc && likeDoc.isLiked === isLiked) return res.status(409).json({ message: `You already ${action}d this comment` });
 
         if(!likeDoc){
             likeDoc = new Like({
@@ -205,17 +194,17 @@ export const likeOrDislikeComment = async (req, res) => {
 
 export const deleteComment = async (req, res) => {
     const { postId, commentId } = req.params;
-    if(!mongoose.isValidObjectId(postId)) return res.status(400).json({ msg: "Invalid post id" });
-    if(!mongoose.isValidObjectId(commentId)) return res.status(400).json({ msg: "Invalid comment id" });
+    if(!mongoose.isValidObjectId(postId)) return res.status(400).json({ message: "Invalid post id" });
+    if(!mongoose.isValidObjectId(commentId)) return res.status(400).json({ message: "Invalid comment id" });
     
     let session = null;
 
     try {
         const post = await Post.findById(postId);
-        if(!post) return res.status(400).json({ msg: "Post not found" });
+        if(!post) return res.status(404).json({ message: "Post not found" });
 
         const comment = await Comment.findById(commentId);
-        if(!comment) return res.status(404).json({ msg: "Comment not found" });
+        if(!comment) return res.status(404).json({ message: "Comment not found" });
 
         if((Roles.USER === req.user.role) && (comment.owner.toString() !== req.user.id)) return res.status(403).json({ message: 'Forbidden: You do not have the necessary permissions to delete this comment' });
 

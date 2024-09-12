@@ -7,6 +7,8 @@ import { commentCreationSchema, commentUpdateSchema, replyUpdateSchema } from ".
 import { createCommentReply, deleteCommentReply, getCommentReplies, likeOrDislikeReply, updateCommentReply } from "../controllers/repliesController.js";
 import authorizeRoles from "../middleware/authorizeRoles.js";
 import { Roles } from "../utils/enums.js";
+import checkPostExists from "../middleware/checkPostExists.js";
+import checkCommentExists from "../middleware/checkCommentExists.js";
 
 const router = Router();
 
@@ -26,27 +28,27 @@ router.delete('/:postId', authenticateToken, authorizeRoles(Roles.ADMIN, Roles.M
 
 // comments
 
-router.get('/:postId/comments', getComments);
+router.get('/:postId/comments', checkPostExists, getComments);
 
-router.get('/:postId/comments/:commentId', getComment);
+router.get('/:postId/comments/:commentId', checkPostExists, checkCommentExists, getComment);
 
 router.post('/:postId/comments', authenticateToken, commentCreationSchema, createComment);
 
-router.post('/:postId/comments/:commentId/like', authenticateToken, likeOrDislikeComment);
+router.post('/:postId/comments/:commentId/like', authenticateToken, checkPostExists, likeOrDislikeComment);
 
-router.patch('/:postId/comments/:commentId', authenticateToken, commentUpdateSchema, updateComment);
+router.patch('/:postId/comments/:commentId', authenticateToken, commentUpdateSchema, checkPostExists, updateComment);
 
 router.delete('/:postId/comments/:commentId', authenticateToken, deleteComment);
 
 // replies
 
-router.get('/:postId/comments/:commentId/replies', getCommentReplies);
+router.get('/:postId/comments/:commentId/replies', checkPostExists, checkCommentExists, getCommentReplies);
 
 router.post('/:postId/comments/:commentId/replies', authenticateToken, commentUpdateSchema, createCommentReply);
 
-router.post('/:postId/comments/:commentId/replies/:replyId/like', authenticateToken, likeOrDislikeReply);
+router.post('/:postId/comments/:commentId/replies/:replyId/like', authenticateToken, checkPostExists, checkCommentExists, likeOrDislikeReply);
 
-router.patch('/:postId/comments/:commentId/replies/:replyId', authenticateToken, replyUpdateSchema, updateCommentReply);
+router.patch('/:postId/comments/:commentId/replies/:replyId', authenticateToken, replyUpdateSchema, checkPostExists, checkCommentExists, updateCommentReply);
 
 router.delete('/:postId/comments/:commentId/replies/:replyId', authenticateToken, deleteCommentReply);
 

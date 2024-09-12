@@ -55,14 +55,7 @@ This is the backend API for a personal blog built using Node.js and Express.js, 
 
 ## Public API Endpoints
 
-The following endpoints are accessible without authentication:
-
-* `GET /api/posts` - Get a list of all posts.
-* `GET /api/posts/:postId` - Get a single post by ID.
-* `GET /api/posts/:postId/comments` - Get a list of comments on a specific post.
-* `GET /api/posts/:postId/comments/:commentId` - Get a specific comment on a post.
-* `GET /api/posts/:postId/comments/:commentId/replies` - Get a list of replies to a specific comment.
-* `GET /api/posts/:postId/comments/:commentId/replies/:replyId` - Get a specific reply to a comment.
+For detailed information about the public API endpoints, please refer to the [API Documentation](publicEndpointsDoc.md).
 
 ## Project Setup
 
