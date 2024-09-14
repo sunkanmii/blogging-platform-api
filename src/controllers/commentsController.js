@@ -85,7 +85,7 @@ export const createComment = async (req, res) => {
     let session = null;    
     try {
         const post = await Post.findById(postId);
-        if(!post) return res.status(400).json({ message: "Post not found" });
+        if(!post) return res.status(404).json({ message: "Post not found" });
         
         const comment = new Comment({
             post: postId,

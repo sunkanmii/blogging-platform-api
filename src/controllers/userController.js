@@ -22,7 +22,7 @@ export const getUser = async (req, res) => {
 export const getUsers = async (req, res) => {
     const { limit = 10, cursor, sort = Sort.NEWEST, role } = req.query;
 
-    if(![Roles.MODERATOR, Roles.USER, Roles.ADMIN].includes(role)) return res.status(403).json({ message: "role query param is not valid, it should be either 'user' or 'moderator'" })
+    if(![Roles.MODERATOR, Roles.USER, Roles.ADMIN].includes(role)) return res.status(400).json({ message: "role query param is not valid, it should be either 'user' or 'moderator'" })
     
     if(isNaN(limit)) return res.status(400).json({ message: "limit query param must be a number" });
 
@@ -49,7 +49,7 @@ export const getUsers = async (req, res) => {
     }
 
     try {
-        const users = await User.find(findQuery, { fullName: true, username: true, profileImage: true })
+        const users = await User.find(findQuery, { fullName: true, username: true, profileImage: true, isActive: true })
             .sort(sortQuery)
             .limit(limit)
             .exec();
@@ -125,7 +125,7 @@ export const deleteUser = async (req, res) => {
 export const changeUserRole = async (req, res) => {
     const result = validationResult(req);
     if(!result.isEmpty()){
-        return res.status(403).json({ errors: result.array() });
+        return res.status(400).json({ errors: result.array() });
     }
     const { userId, role } = matchedData(req);
     try {

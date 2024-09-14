@@ -134,7 +134,7 @@ export const resendActivationEmail = async (req, res) => {
         const user = await User.findOne({ email });
 
         if(!user){
-            return res.status(400).json({ message: "User not found" });
+            return res.status(404).json({ message: "User not found" });
         }
 
         const token = crypto.randomBytes(32).toString('hex');
@@ -169,7 +169,7 @@ export const logout = async (req, res) => {
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'None'
             });
-            return res.status(401).json({ message: 'refresh token is not found' });
+            return res.status(400).json({ message: 'refresh token is not found' });
         }
 
         foundUser.refreshTokens.pull(refreshToken);
@@ -204,7 +204,7 @@ export const refreshToken = async (req,res) => {
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'None'
             });
-            return res.status(401).json({ message: 'refresh token is not found' });
+            return res.status(404).json({ message: 'refresh token is not found' });
         }
 
         jwt.verify(refreshToken, process.env.JWT_SECRET_KEY, async (error) => {
@@ -218,7 +218,7 @@ export const refreshToken = async (req,res) => {
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'None'
                 });
-                return res.status(401).json({ message: 'Invalid or expired refresh token'});
+                return res.status(400).json({ message: 'Invalid or expired refresh token'});
             }
 
             const theUser = { 
@@ -311,7 +311,7 @@ export const updatePassword = async (req, res) => {
 
         await user.save();
 
-        return res.status(200).json({ message: "Password updated successfully" });
+        return res.status(200).json({ message: "Password was updated successfully" });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: `Error occured: ${error.message}` }); 
