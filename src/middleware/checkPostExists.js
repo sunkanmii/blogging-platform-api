@@ -12,7 +12,7 @@ const checkPostExists = async (req, res, next) => {
         next();
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ error: `Internal server error: ${error.message}` });
+        return res.status(500).json({ message: `Internal server error: ${error.message}` });
     }
 }
 

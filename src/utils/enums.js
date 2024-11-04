@@ -9,3 +9,10 @@ export const Sort = Object.freeze({
     OLDEST: "oldest",
     TOP: "top"
 });
+
+export const postBodyBlocks = Object.freeze({
+    IMAGE: "Image",
+    CODE_SNIPPET: "Code Snippet",
+    CODE_OUTPUT: "Code Output",
+    EDITOR: "Editor" // text
+});

@@ -9,8 +9,8 @@ import { Sort } from "../utils/enums.js";
 export const getPosts = async (req, res) => {
 
     const result = validationResult(req);
-    if(!result.isEmpty()){
-        return res.status(400).json({ error: result.array()});
+    if (!result.isEmpty()) {
+        return res.status(400).json({ error: result.array() });
     }
     const { limit = 8, cursor, sort = Sort.NEWEST, search = "", tags = "" } = matchedData(req);
 
@@ -24,16 +24,16 @@ export const getPosts = async (req, res) => {
 
     const findQuery = {};
 
-    if(search !== ""){
+    if (search !== "") {
         findQuery.$or = [
-            { title: {$regex: search, $options: "i"} }, 
-            { description: {$regex: search, $options: "i"} }
+            { title: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } }
         ]
     }
 
-    if(tags !== ""){
-        const arrayOfTags = tags.toLowerCase().split(",");           
-        findQuery.tags = {$in: arrayOfTags};
+    if (tags !== "") {
+        const arrayOfTags = tags.toLowerCase().split(",");
+        findQuery.tags = { $in: arrayOfTags };
     }
 
     if (cursor) {
@@ -71,7 +71,7 @@ export const getPosts = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ error: `Internal server error: ${error.message}` });
+        return res.status(500).json({ message: `Internal server error: ${error.message}` });
     }
 }
 
@@ -89,7 +89,7 @@ export const getPost = async (req, res) => {
         return res.status(200).json(foundPost);
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ error: `Internal server error: ${error.message}` });
+        return res.status(500).json({ message: `Internal server error: ${error.message}` });
     }
 }
 
@@ -97,16 +97,16 @@ export const createPost = async (req, res) => {
     const result = validationResult(req);
     if (!result.isEmpty()) {
         const errors = result.array();
-        const errorMessages = {};
-        errorMessages.title = errors.find((error) => error.path === "title")?.msg;
-        errorMessages.description = errors.find((error) => error.path === "description")?.msg;
-        errorMessages.content = errors.find((error) => error.path === "content")?.msg;
-        errorMessages.tags = errors.find((error) => error.path === "tags")?.msg;
-        return res.status(400).json({ errorMessages });
+        const message = {};
+        message.title = errors.find((error) => error.path === "title")?.msg;
+        message.description = errors.find((error) => error.path === "description")?.msg;
+        message.content = errors.find((error) => error.path === "content")?.msg;
+        message.tags = errors.find((error) => error.path === "tags")?.msg;
+        return res.status(400).json({ message });
     }
 
     const { title, description, content, tags } = matchedData(req);
-    
+
     try {
         const post = new Post({
             author: req.user.id,
@@ -116,10 +116,15 @@ export const createPost = async (req, res) => {
             tags: tags.map(tag => tag.toLowerCase())
         });
         await post.save();
-        return res.status(201).json({ message: 'Post created successfully.' });
+
+        const response = { message: 'Post created successfully.' }
+        if (req.newAccessToken) {
+            response.accessToken = req.newAccessToken;
+        }
+        return res.status(201).json(response);
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ error: `Internal server error: ${error.message}` });
+        return res.status(500).json({ message: `Internal server error: ${error.message}` });
     }
 }
 
@@ -129,12 +134,12 @@ export const updatePost = async (req, res) => {
     const result = validationResult(req);
     if (!result.isEmpty()) {
         const errors = result.array();
-        const errorMessages = {};
-        errorMessages.title = errors.find((error) => error.path === "title")?.msg;
-        errorMessages.description = errors.find((error) => error.path === "description")?.msg;
-        errorMessages.content = errors.find((error) => error.path === "content")?.msg;
-        errorMessages.tags = errors.find((error) => error.path === "tags")?.msg;
-        return res.status(400).json({ errorMessages });
+        const message = {};
+        message.title = errors.find((error) => error.path === "title")?.msg;
+        message.description = errors.find((error) => error.path === "description")?.msg;
+        message.content = errors.find((error) => error.path === "content")?.msg;
+        message.tags = errors.find((error) => error.path === "tags")?.msg;
+        return res.status(400).json({ message });
     }
 
     const data = matchedData(req);
@@ -153,10 +158,13 @@ export const updatePost = async (req, res) => {
 
         await post.save();
 
+        if (req.newAccessToken) {
+            return res.status(200).json({ accessToken: req.newAccessToken });
+        }
         return res.sendStatus(204);
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ error: `Internal server error: ${error.message}` });
+        return res.status(500).json({ message: `Internal server error: ${error.message}` });
     }
 }
 
@@ -179,6 +187,9 @@ export const deletePost = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
+        if (req.newAccessToken) {
+            return res.status(200).json({ accessToken: req.newAccessToken });
+        }
         return res.sendStatus(204);
     } catch (error) {
         if (session !== null) {
@@ -187,7 +198,7 @@ export const deletePost = async (req, res) => {
         }
 
         console.log(error);
-        return res.status(500).json({ error: `Internal server error: ${error.message}` });
+        return res.status(500).json({ message: `Internal server error: ${error.message}` });
     }
 }
 
@@ -237,6 +248,9 @@ export const likeOrDislikePost = async (req, res) => {
         await session.commitTransaction();
         session.endSession();
 
+        if (req.newAccessToken) {
+            return res.status(200).json({ accessToken: req.newAccessToken });
+        }
         return res.sendStatus(204);
     } catch (error) {
         if (session !== null) {
@@ -244,6 +258,6 @@ export const likeOrDislikePost = async (req, res) => {
             session.endSession();
         }
         console.log(error);
-        return res.status(500).json({ error: `Internal server error: ${error.message}` });
+        return res.status(500).json({ message: `Internal server error: ${error.message}` });
     }
 }

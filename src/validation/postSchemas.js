@@ -1,17 +1,17 @@
 import { body, param, query } from 'express-validator';
-import { Sort } from '../utils/enums.js';
+import { postBodyBlocks, Sort } from '../utils/enums.js';
 import mongoose from 'mongoose';
 
 const validateContentBlock = (block) => {
     // Perform validation for a single content block
     const errors = [];
-    if (!['text', 'header', 'image', 'code'].includes(block.type)) {
+    if (![...postBodyBlocks].includes(block.type)) {
         return false;
     }
     if (!block.value || typeof block.value !== 'string') {
         return false;
     }
-    if (block.type === 'code' && !block.language) {
+    if (block.type === postBodyBlocks.CODE_SNIPPET && !block.language) {
         return false;
     }
     return true;
@@ -30,17 +30,48 @@ export const postCreationSchema = [
         .withMessage('Post description is required')
         .isString()
         .withMessage('Post description must be a string'),
+    body('headers')
+        .isArray()
+        .withMessage('Headers must be an array')
+        .custom((content) => {
+            if (content.length === 0) return false;
+            return true;
+        })
+        .withMessage('Headers must not be empty')
+        .custom((headers) => {
+            for (const header of headers) {
+                if (typeof header.value !== "String" || header.value === "") {
+                    return false;
+                }
+                if (typeof header.id !== "String" || header.id === "") {
+                    return false;
+                }
+                if (typeof header.type !== "H2" || header.type !== "H3") {
+                    return false;
+                }
+            }
+            return true;
+        })
+        .withMessage('All headers must be string'),
+    body('cover')
+        .trim()
+        .notEmpty()
+        .withMessage('Post Cover is required')
+        .isString()
+        .withMessage('Post Cover must be a URL string')
+        .isURL()
+        .withMessage('Post Cover must be a URL'),
     body('content')
         .isArray()
         .withMessage('Content must be an array')
         .custom((content) => {
-            if(content.length === 0) return false;
+            if (content.length === 0) return false;
             return true;
         })
         .withMessage('Content must not be empty')
         .custom((content) => {
             for (const block of content) {
-                if(!validateContentBlock(block)){
+                if (!validateContentBlock(block)) {
                     return false;
                 }
             }
@@ -51,7 +82,7 @@ export const postCreationSchema = [
         .isArray()
         .withMessage('Tags must be an array')
         .custom((tags) => {
-            if(tags.length === 0) return false;
+            if (tags.length === 0) return false;
             return true;
         })
         .withMessage('Tags must not be an empty array')
@@ -81,13 +112,13 @@ export const postUpdateScema = [
         .isArray()
         .withMessage('Content must be an array')
         .custom((content) => {
-            if(content.length === 0) return false;
+            if (content.length === 0) return false;
             return true;
         })
         .withMessage('Content must not be empty')
         .custom((content) => {
             for (const block of content) {
-                if(!validateContentBlock(block)){
+                if (!validateContentBlock(block)) {
                     return false;
                 }
             }
@@ -99,7 +130,7 @@ export const postUpdateScema = [
         .isArray()
         .withMessage('Tags must be an array')
         .custom((tags) => {
-            if(tags.length === 0) return false;
+            if (tags.length === 0) return false;
             return true;
         })
         .withMessage('Tags must not be an empty array')

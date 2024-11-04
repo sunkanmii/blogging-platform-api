@@ -15,7 +15,7 @@ const createTransporter = () => {
 export const sendActivationEmail = async (email, token) => {
     const transporter = createTransporter();
 
-    const resetLink = `${process.env.FRONTEND_URL}/account-activation/${token}`;
+    const resetLink = `${process.env.FRONTEND_URL}/auth/account-activation/${token}`;
 
     const emailHtml = readFileSync(path.join(import.meta.dirname, '../templates/emails/account-activation.html'), 'utf-8');
     
