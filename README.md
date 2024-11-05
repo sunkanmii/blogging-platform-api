@@ -20,38 +20,25 @@ This is the backend API for a personal blog built using Node.js and Express.js, 
 
 ## Features
 
-### Role-Based Permissions
-
-**Admin & Moderator:**
-
-* Can create, update, and delete posts.
-* Can delete comments and comment replies.
-* Can view a list of all users, moderators, and admins.
-* Admins can change the roles of users.
-* Can delete a user's account.
-
-**User (Authenticated):**
-
-* Can like/dislike posts, comments, and replies.
-* Can comment on posts and reply to comments.
-* Can update or delete their own account.
-* Can view their own profile or other users' profiles.
+### Actions
 
 **Unauthenticated Users:**
 
 * Can read posts and comments.
 * Cannot like/dislike or comment unless logged in.
 
+**Authenticated Users:**
+
+* Can like/dislike posts, comments, and replies.
+* Can comment on posts and reply to comments.
+* Can update or delete their own account.
+* Can view their own profile or other users' profiles.
+
 ### Authentication
 
 * JWT-based authentication: Sign up, login, and protected routes.
-* Account Activation via Email: Users must activate their account via an activation email before logging in.
-* Forgot Password: Users can reset their password via an email link.
-
-### Profiles
-
-* Users can view their own profile and update their information.
-* Users can view other users’ profiles, but only Admins and Moderators can see lists of all users.
+* Account Activation via Email: Users must activate their account after signing up via an activation email before logging in.
+* Forgot Password: Users can reset their password via a reset password email.
 
 ## Public API Endpoints
 
@@ -104,12 +91,6 @@ For detailed information about the public API endpoints, please refer to the [AP
    ```bash
    npm run start:dev
    ```
-
-## Authentication and Authorization
-
-* **JWT Authentication:** JWT (JSON Web Token) is used to protect routes and manage user sessions.
-* **Account Activation:** Upon signing up, users receive an account activation email. They must activate their account to log in.
-* **Role-Based Authorization:** Admin and Moderator roles have additional privileges to manage content and users.
 
 ## Contributing
 
