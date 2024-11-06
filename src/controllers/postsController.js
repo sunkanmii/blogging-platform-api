@@ -57,10 +57,9 @@ export const getPosts = async (req, res) => {
         }
     }
     try {
-        const posts = await Post.find(findQuery, { title: true, description: true, author: true, tags: true })
+        const posts = await Post.find(findQuery, { title: true, cover: true, tags: true, likes: true, dislikes: true, comments: true })
             .sort(sortQuery)
             .limit(limit)
-            .populate('author', 'fullName profileImage')
             .exec();
 
         const nextCursor = (posts.length && posts.length === parseInt(limit)) ? posts[posts.length - 1]._id : null;

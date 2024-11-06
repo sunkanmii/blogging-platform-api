@@ -19,31 +19,29 @@ The following endpoints are accessible without authentication:
         {
             "_id": "66d1d3c74bad05be1b18a65e",
             "title": "Understanding JavaScript Closures",
-            "description": "An in-depth guide to understanding closures in JavaScript.",
-            "author": {
-                "_id": "66e038559b9bb0ffc46836fc",
-                "fullName": "Abdallah Radfi",
-                "profileImage": null
-            },
+            "cover": "blog-covers/c569be2e-0f2a-4ee0-aecf-c8076ab51829-url_sections.png",
             "tags": [
                 "javaScript",
                 "closures",
                 "programming"
-            ]
+            ],
+            "likes": 4,
+            "dislikes": 0,
+            "comments": 1,
+            "createdAt": "2024-08-30T14:14:31.651Z"
         },
         {
             "_id": "66d0f72469a2dcd4d9444556",
             "title": "Licensed reboot Lead",
-            "description": "We need to parse the 1080p SAS alarm!",
-            "author": {
-                "_id": "66e038559b9bb0ffc46836fc",
-                "fullName": "Abdallah Radfi",
-                "profileImage": null
-            },
+            "cover": "blog-covers/94a42798-d17a-4fed-bcfb-dbbbf0c7238c-Screenshot from 2024-07-11 19-18-19.png"
             "tags": [
                 "wooden",
                 "teal"
-            ]
+            ],
+            "likes": 14,
+            "dislikes": 2,
+            "comments": 0,
+            "createdAt": "2024-08-30T14:14:31.651Z"
         }
     ]
 }
@@ -66,28 +64,26 @@ The following endpoints are accessible without authentication:
 {
     "_id": "66d1d3c74bad05be1b18a65e",
     "title": "Understanding JavaScript Closures",
+    "cover": "blog-covers/c569be2e-0f2a-4ee0-aecf-c8076ab51829-url_sections.png",
     "description": "An in-depth guide to understanding closures in JavaScript.",
     "content": [
         {
-            "type": "header",
-            "value": "Introduction to Closures"
+            "type": "Editor",
+            "value": "<body><h2>1 What is HTML?</h2><p>HTML stands for ...</p></body>"
         },
         {
-            "type": "text",
-            "value": "Closures are a fundamental concept in JavaScript that every developer should understand..."
+            "type": "Image",
+            "value": "blog-images/94a42798-d17a-4fed-bcfb-dbbbf0c7238c-Screenshot from 2024-07-11 19-18-19.png"
         },
         {
-            "type": "code",
-            "value": "function outerFunction() { ... }",
+            "id": "747335ae-b351-4c65-af2e-85a535c68cb5",
+            "type": "Code Snippet",
+            "value": "console.log('code example');",
             "language": "javascript"
         },
-        {
-            "type": "text",
-            "value": "In this example, `innerFunction` forms a closure that gives it access to `outerVariable`..."
-        },
-        {
-            "type": "image",
-            "value": "https://example.com/js-closures-diagram.png"
+         {
+            "type": "Editor",
+            "value": "<body><h2>Conclusion</h2><p>As we saw in...</p></body>"
         }
     ],
     "author": {
