@@ -4,8 +4,7 @@ import mongoose from 'mongoose';
 
 const validateContentBlock = (block) => {
     // Perform validation for a single content block
-    const errors = [];
-    if (![...postBodyBlocks].includes(block.type)) {
+    if (![...Object.values(postBodyBlocks)].includes(block.type)) {
         return false;
     }
     if (!block.value || typeof block.value !== 'string') {
@@ -33,20 +32,19 @@ export const postCreationSchema = [
     body('headers')
         .isArray()
         .withMessage('Headers must be an array')
-        .custom((content) => {
-            if (content.length === 0) return false;
-            return true;
+        .custom((headers) => {
+            return headers.length !== 0;
         })
         .withMessage('Headers must not be empty')
         .custom((headers) => {
             for (const header of headers) {
-                if (typeof header.value !== "String" || header.value === "") {
+                if (typeof header.value !== "string" || header.value === "") {
                     return false;
                 }
-                if (typeof header.id !== "String" || header.id === "") {
+                if (typeof header.id !== "string" || header.id === "") {
                     return false;
                 }
-                if (typeof header.type !== "H2" || header.type !== "H3") {
+                if (!(["H2", "H3"].includes(header.type))) {
                     return false;
                 }
             }
@@ -58,9 +56,7 @@ export const postCreationSchema = [
         .notEmpty()
         .withMessage('Post Cover is required')
         .isString()
-        .withMessage('Post Cover must be a URL string')
-        .isURL()
-        .withMessage('Post Cover must be a URL'),
+        .withMessage('Post Cover must be a URL string'),
     body('content')
         .isArray()
         .withMessage('Content must be an array')

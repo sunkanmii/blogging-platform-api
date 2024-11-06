@@ -100,18 +100,23 @@ export const createPost = async (req, res) => {
         const message = {};
         message.title = errors.find((error) => error.path === "title")?.msg;
         message.description = errors.find((error) => error.path === "description")?.msg;
+        message.headers = errors.find((error) => error.path === "headers")?.msg;
+        message.cover = errors.find((error) => error.path === "cover")?.msg;
         message.content = errors.find((error) => error.path === "content")?.msg;
         message.tags = errors.find((error) => error.path === "tags")?.msg;
+        console.log(message);
         return res.status(400).json({ message });
     }
 
-    const { title, description, content, tags } = matchedData(req);
+    const { title, description, headers, cover, content, tags } = matchedData(req);
 
     try {
         const post = new Post({
             author: req.user.id,
             title,
             description,
+            headers,
+            cover,
             content,
             tags: tags.map(tag => tag.toLowerCase())
         });

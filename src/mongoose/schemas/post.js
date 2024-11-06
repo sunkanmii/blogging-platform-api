@@ -1,9 +1,10 @@
 import mongoose, { Schema, SchemaTypes } from "mongoose";
+import { postBodyBlocks } from "../../utils/enums.js";
 
 const contentBlockSchema = new Schema({
     type: {
         type: SchemaTypes.String,
-        enum: ['text', 'header', 'image', 'code'],
+        enum: [...Object.values(postBodyBlocks)],
         required: true
     },
     value: {
@@ -12,12 +13,32 @@ const contentBlockSchema = new Schema({
     },
     language: {
         type: SchemaTypes.String,
-        required: function(){ return this.type === 'code'; }
+        required: function () { return this.type === postBodyBlocks.CODE_SNIPPET; }
     }
 },
-{
-    _id: false // Prevents creating a separate _id for each content block
-})
+    {
+        _id: false // Prevents creating a separate _id for each content block
+    }
+);
+
+const HeaderSchema = new Schema({
+    id: {
+        type: SchemaTypes.String,
+        required: true
+    },
+    type: {
+        type: SchemaTypes.String,
+        required: true
+    },
+    value: {
+        type: SchemaTypes.String,
+        required: true
+    }
+},
+    {
+        _id: false
+    }
+);
 
 const postSchema = new Schema({
     title: {
@@ -25,6 +46,11 @@ const postSchema = new Schema({
         required: true
     },
     description: {
+        type: SchemaTypes.String,
+        required: true
+    },
+    headers: [HeaderSchema], // array of headers
+    cover: {
         type: SchemaTypes.String,
         required: true
     },
@@ -52,9 +78,9 @@ const postSchema = new Schema({
         default: 0
     }
 },
-{
-    timestamps: true
-})
+    {
+        timestamps: true
+    })
 
 postSchema.index({ tags: 1 });
 
