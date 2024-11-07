@@ -1,0 +1,7 @@
+openapi: "3.0.2"
+info:
+  title: "BloggingAPI"
+  version: "1.0"
+  description: "Personal blog API for {blog-name} capable of reading posts and comments, liking and disliking posts, comments, and replies. Data is primarily available in JSON format"
+paths: {}
+
