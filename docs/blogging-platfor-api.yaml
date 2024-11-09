@@ -3,5 +3,42 @@ info:
   title: "BloggingAPI"
   version: "1.0"
   description: "Personal blog API for {blog-name} capable of reading posts and comments, liking and disliking posts, comments, and replies. Data is primarily available in JSON format"
-paths: {}
+  contact:
+    name: "Blogging API"
+    url: "https://blogging-platform-api-uhuy.onrender.com"
+servers:
+  - url: "https://blogging-platform-api-uhuy.onrender.com"
+paths:
+  /api/posts:
+    get:
+      tags:
+      - List of all posts
+      summary: "Retrieves list of all posts from blog"
+      description: "Sets the posts limit to retrieve, cursor to the next posts, provides a sorting option, allows search for specific words in a title or description and a filter posts by tags method. \n\n<br/>Note: All these parameters are optional to set</br>"
+      parameters:
+        - name: limit
+          in: query
+          description: "**Post limit** *Example*: 2.\n Default value: 8. \n\n When specified, it sets the posts limit queried to the specified value."
+          schema:
+            type: number
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                title: Sample
+                type: object
+                properties:
+                  placeholder:
+                    type: string
+                    description: Placeholder description
 
+        404:
+          description: Not found response
+          content:
+            text/plain:
+              schema:
+                title: Blog not found
+                type: string
+                example: Not found
